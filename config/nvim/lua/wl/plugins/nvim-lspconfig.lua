@@ -135,9 +135,15 @@ return {
                 on_attach = on_attach,
                 capabilities = capabilities,
             }
+
+            local lspconfig = require("lspconfig")
+            local python_root_files = {
+                "pyrightconfig.json",
+            }
             require("lspconfig").pyright.setup {
                 on_attach = on_attach,
                 capabilities = capabilities,
+                root_dir = lspconfig.util.root_pattern(unpack(python_root_files)),
             }
         end,
     },

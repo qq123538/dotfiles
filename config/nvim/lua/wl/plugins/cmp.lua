@@ -25,6 +25,7 @@ return {
             -- mind that package.json need to be updated
             require("luasnip.loaders.from_vscode").lazy_load { paths = { "./vscode_snippets" } }
             luasnip.filetype_extend("c", { "cdoc" })
+            luasnip.filetype_extend("cpp", { "c" })
 
             local kind_icons = {
                 Text = "󰊄",
