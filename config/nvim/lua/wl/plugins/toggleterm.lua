@@ -6,8 +6,13 @@ return {
         },
         config = function()
             require("toggleterm").setup {
-                size = 25,
-                open_mapping = [[<c-\>]],
+                size = function(term)
+                    if term.direction == "horizontal" then
+                        return 25
+                    elseif term.direction == "vertical" then
+                        return vim.o.columns * 0.4
+                    end
+                end,
                 direction = "horizontal",
                 start_in_insert = true,
             }
@@ -19,6 +24,9 @@ return {
                     -- vim.keymap.set("t", "jk", [[<C-\><C-n>]], opts)
                 end
             end
+
+            vim.keymap.set({ "n", "t" }, "<C-\\>", "<cmd>ToggleTerm direction=horizontal<CR>")
+            vim.keymap.set({ "n", "t" }, "<A-\\>", "<cmd>ToggleTerm direction=vertical<CR>")
 
             -- if you only want these mappings for toggle term use term://*toggleterm#* instead
             vim.cmd("autocmd! TermOpen term://* lua set_terminal_keymaps()")
