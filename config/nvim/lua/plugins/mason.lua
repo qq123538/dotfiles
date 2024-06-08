@@ -12,6 +12,7 @@ return {
                 "cmake",
                 "lua_ls",
                 "pyright",
+                "bashls",
             })
         end,
     },
@@ -28,6 +29,8 @@ return {
                 "cmake_format",
                 "black",
                 "prettier",
+                "shellcheck",
+                "shfmt",
             })
         end,
     },

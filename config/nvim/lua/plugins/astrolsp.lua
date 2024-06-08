@@ -87,6 +87,8 @@ return {
             pyright = {
                 root_dir = lspconfig.util.root_pattern(unpack(python_root_files)),
             },
+            bashls = {},
+            cmake = {},
         },
         -- customize how language servers are attached
         handlers = {
