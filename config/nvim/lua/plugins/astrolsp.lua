@@ -22,6 +22,11 @@ return {
         },
         -- customize lsp formatting options
         formatting = {
+            filter = function(client)
+                -- apply whatever logic you want (in this example, we'll only use null-ls)
+                return client.name == "null-ls"
+            end,
+
             -- control auto formatting on save
             format_on_save = {
                 enabled = false, -- enable or disable format on save globally
