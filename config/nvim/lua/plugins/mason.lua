@@ -31,6 +31,8 @@ return {
                 "prettier",
                 "shellcheck",
                 "shfmt",
+                "verible",
+                "checkmake",
             })
         end,
     },

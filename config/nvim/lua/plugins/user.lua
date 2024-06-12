@@ -94,6 +94,13 @@ return {
     },
     {
         "folke/noice.nvim",
+        dependencies = {
+            "rcarriga/nvim-notify",
+            opts = {
+                timeout = 1500,
+                top_down = false,
+            },
+        },
         opts = {
             presets = {
                 bottom_search = false, -- use a classic bottom cmdline for search
