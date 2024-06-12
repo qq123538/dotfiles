@@ -7,7 +7,7 @@
     "snippets": [
       {
         "language": "c",
-        "path": "./nio_c.json"
+        "path": "./custom_c.json"
       }
     ]
   }
