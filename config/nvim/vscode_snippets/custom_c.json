@@ -4,7 +4,7 @@
     "body": [
       "/**",
       " * @file $1",
-      " * @author steven li (steven.li3@nio.com)",
+      " * @author steven li",
       " * @brief $2",
       " * @version 0.1",
       " * @date ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}",
@@ -21,7 +21,7 @@
     "body": [
       "/**",
       " * @file $1",
-      " * @author steven li (steven.li3@nio.com)",
+      " * @author steven li",
       " * @brief $2",
       " * @version 0.1",
       " * @date ${CURRENT_YEAR}-${CURRENT_MONTH}-${CURRENT_DATE}",
