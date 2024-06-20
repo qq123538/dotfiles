@@ -72,6 +72,9 @@ return {
                 ["<A-k>"] = { "<Up>", desc = "move cursor in insert mode" },
                 ["<A-j>"] = { "<Down>", desc = "move cursor in insert mode" },
             },
+            t = {
+                ["<C-L>"] = false,
+            },
         },
 
         autocmds = {
