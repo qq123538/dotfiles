@@ -32,7 +32,7 @@ return {
                 "shellcheck",
                 "shfmt",
                 "verible",
-                "checkmake",
+                -- "checkmake",
             })
         end,
     },
