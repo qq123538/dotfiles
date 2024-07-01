@@ -189,6 +189,7 @@ return {
     },
     {
         "akinsho/toggleterm.nvim",
+        lazy = false,
         dependencies = {
             {
                 -- AstroCore is always loaded on startup, so making it a dependency doesn't matter
@@ -196,31 +197,78 @@ return {
                 opts = {
                     mappings = { -- define a mapping to load the plugin module
                         n = {
-                            ["<c-\\>"] = { '<Cmd>execute v:count . "ToggleTerm"<CR>', desc = "Toggle terminal" },
+                            -- ["<c-\\>"] = false,
+                            ["<Leader>th"] = false,
+                            ["<Leader>tv"] = false,
                             ["<Leader>tl"] = false,
+                            ["<Leader>gg"] = false,
                         },
                         t = {
                             ["<ESC><ESC>"] = { "<C-\\><C-N>", desc = "return to normal mode" },
-                            ["<c-\\>"] = { "<Cmd>ToggleTerm<CR>", desc = "Toggle terminal" },
-                        },
-                        i = {
-                            ["<c-\\>"] = { "<Esc><Cmd>ToggleTerm<CR>", desc = "Toggle terminl" },
+                            ["<c-\\>"] = false,
                         },
                     },
                 },
             },
         },
-        opts = {
-            open_mapping = [[<c-\>]],
-            size = 20,
-            on_create = function(t)
-                vim.opt_local.foldcolumn = "0"
-                vim.opt_local.signcolumn = "no"
-                if t.hidden then
-                    local toggle = function() t:toggle() end
-                    vim.keymap.set({ "n", "t", "i" }, "<c-\\>", toggle, { desc = "Toggle terminal", buffer = t.bufnr })
+        opts = function(plugin, opts)
+            local direction = "float"
+            opts.size = 20
+
+            -- used for lazygit
+            local Terminal = require("toggleterm.terminal").Terminal
+            local lazygit = Terminal:new {
+                cmd = "lazygit",
+                hidden = true,
+                direction = "float",
+                count = 10,
+            }
+
+            local function lazygit_toggle()
+                if vim.fn.bufname("%"):match "^term:" == nil then
+                    lazygit.dir = vim.fn.expand "%:p:h" -- current working directory for the active buffer
+                    lazygit:toggle()
                 end
-            end,
-        },
+            end
+
+            vim.keymap.set(
+                "n",
+                "<Leader>gg",
+                function() lazygit_toggle() end,
+                { noremap = true, silent = true, desc = "lazygit" }
+            )
+
+            -- change direction for terminal
+            local function term_toggle(dir)
+                local size = opts.size
+                direction = dir
+                if dir == "vertical" then size = 80 end
+                vim.cmd(vim.v.count .. "ToggleTerm" .. " direction=" .. direction .. " size=" .. size)
+            end
+            vim.keymap.set(
+                "n",
+                "<Leader>tv",
+                function() term_toggle "vertical" end,
+                { noremap = true, silent = true, desc = "Split terminal vertically" }
+            )
+            vim.keymap.set(
+                "n",
+                "<Leader>th",
+                function() term_toggle "horizontal" end,
+                { noremap = true, silent = true, desc = "Split terminal horizontallly" }
+            )
+            vim.keymap.set(
+                "n",
+                "<Leader>tf",
+                function() term_toggle "float" end,
+                { noremap = true, silent = true, desc = "Split terminal horizontallly" }
+            )
+            vim.keymap.set(
+                { "n", "t" },
+                "<c-\\>",
+                function() term_toggle(direction) end,
+                { noremap = true, silent = true, desc = "Toggle term" }
+            )
+        end,
     },
 }
