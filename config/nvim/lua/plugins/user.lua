@@ -197,7 +197,7 @@ return {
                 opts = {
                     mappings = { -- define a mapping to load the plugin module
                         n = {
-                            -- ["<c-\\>"] = false,
+                            ["<c-\\>"] = false,
                             ["<Leader>th"] = false,
                             ["<Leader>tv"] = false,
                             ["<Leader>tl"] = false,
@@ -214,6 +214,11 @@ return {
         opts = function(plugin, opts)
             local direction = "float"
             opts.size = 20
+
+            opts.on_create = function(t)
+                vim.opt_local.foldcolumn = "0"
+                vim.opt_local.signcolumn = "no"
+            end
 
             -- used for lazygit
             local Terminal = require("toggleterm.terminal").Terminal
@@ -264,9 +269,15 @@ return {
                 { noremap = true, silent = true, desc = "Split terminal horizontallly" }
             )
             vim.keymap.set(
-                { "n", "t" },
+                "n",
                 "<c-\\>",
                 function() term_toggle(direction) end,
+                { noremap = true, silent = true, desc = "Toggle term" }
+            )
+            vim.keymap.set(
+                "t",
+                "<c-\\>",
+                "<Cmd>ToggleTerm<CR>",
                 { noremap = true, silent = true, desc = "Toggle term" }
             )
         end,
