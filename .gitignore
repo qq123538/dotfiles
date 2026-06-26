@@ -5,6 +5,9 @@ npm-debug.log
 .mypy_cache/
 config/nvim/spell
 config/nvim/shada
+config/nvim/lua/local.lua
+vim/vim.symlink/spell/
+vim/vim.symlink/plugged/
 Brewfile.lock.json
 lazy-lock.json
 config/tmux/plugins
