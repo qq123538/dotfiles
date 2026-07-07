@@ -7,6 +7,9 @@
 # Alacritty 无 launch_menu，默认直接进 WSL（贴合 dotfiles 工作流）
 [terminal]
 shell = { program = "wsl.exe", args = ["~", "-d", "Ubuntu-22.04"] }
+# OSC52: OnlyCopy allows remote content to write to local clipboard (copy)
+# but prevents remote panes from reading it (paste), per Alacritty default.
+osc52 = "OnlyCopy"
 
 # ── 环境变量 ─────────────────────────────────────────────────
 # TERM=alacritty 经验证可用（infocmp alacritty 成功，Linuxbrew ncurses 6.6）。
