@@ -16,4 +16,5 @@ return {
     { import = "astrocommunity.motion.nvim-surround" },
     { import = "astrocommunity.motion.flash-nvim" },
     { import = "astrocommunity.ai.avante-nvim" },
+    { import = "astrocommunity.completion.blink-copilot" },
 }
