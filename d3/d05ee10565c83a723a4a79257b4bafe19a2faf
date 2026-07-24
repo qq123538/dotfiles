@@ -1,0 +1,19 @@
+config/nvim/lua/polish.lua
+  s_195ea757cae988::t_25b38cd0893917 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "d3d05ee10565c83a723a4a79257b4bafe19a2faf",
+  "prompts": {},
+  "sessions": {
+    "s_195ea757cae988": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_06ddae4f8ffeZ6pQTn5sueG7IG",
+        "model": "GLM-5.2-Tencent"
+      },
+      "human_author": "Feng LI 李峰 <feng.li37.o@nio.com>"
+    }
+  }
+}
