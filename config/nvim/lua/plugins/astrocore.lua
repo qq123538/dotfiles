@@ -76,7 +76,7 @@ return {
                 writebackup = false, -- if a file is being edited by another program (or was written to file while editing with another program), it is not allowed to be edited
                 expandtab = true, -- convert tabs to spaces
                 foldcolumn = "0",
-                jumpoptions = "view",
+                jumpoptions = "stack,view,clean",
                 spell = false, -- sets vim.opt.spell
                 completeopt = { "menu", "menuone", "noselect", "popup" }, -- sets vim.opt.completeopt
                 equalalways = false
