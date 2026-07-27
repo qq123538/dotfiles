@@ -20,6 +20,14 @@ return {
             },
             onedark = {
                 ["@markup.link"] = { link = "@text.reference" },
+                NormalFloat = { bg = "#282c34" },
+                FloatBorder = { bg = "#282c34", fg = "#5c6370" },
+                SnacksNormal = { link = "Normal" },
+                SnacksNormalNC = { link = "Normal" },
+                NeoTreeFloatNormal = { bg = "#282c34" },
+                NeoTreeFloatBorder = { bg = "#282c34", fg = "#5c6370" },
+                NeoTreeNormal = { bg = "#282c34" },
+                NeoTreeEndOfBuffer = { bg = "#282c34" },
             },
         },
         -- Icons can be configured throughout the interface
