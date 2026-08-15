@@ -220,6 +220,13 @@ return {
                     desc = "Search workspace symbols",
                     cond = "workspace/symbol",
                 },
+                ["<Leader>ls"] = {
+                    -- Override AstroNvim's default (which delegates to aerial.nvim and loses `kind:` filtering).
+                    -- Enable all symbol kinds for c/cpp so `kind:Variable` etc. works in the picker input.
+                    function() require("snacks").picker.lsp_symbols { filter = { c = true, cpp = true } } end,
+                    desc = "Search document symbols",
+                    cond = "textDocument/documentSymbol",
+                },
             },
         },
 
