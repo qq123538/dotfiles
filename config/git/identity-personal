@@ -1,0 +1,20 @@
+# Personal git identity, pinned for the dotfiles repo itself.
+#
+# Included conditionally by config/git/config via:
+#   [includeIf "hasconfig:remote.*.url:*qq123538/dotfiles*"]
+#       path = ~/.config/git/identity-personal
+#
+# Matches by remote URL (path-independent), so it works regardless of where
+# the repo is cloned. Uses GitHub's noreply email (privacy-preserving); the
+# numeric ID + username are already public via every commit in this repo's
+# history, so committing this file adds no new exposure.
+#
+# Prerequisite (machine-local, one-time per machine): the classic
+# ~/.gitconfig must NOT set [user] — its higher precedence than XDG would
+# override this includeIf. With [user] removed from ~/.gitconfig, the work
+# identity comes only from ~/.gitconfig-local (included by config/git/config),
+# and THIS file overrides it for the dotfiles repo. On other repos the
+# includeIf does not match, so the work identity remains the global default.
+[user]
+    name = Wl
+    email = 55847117+qq123538@users.noreply.github.com
