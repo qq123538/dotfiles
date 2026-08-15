@@ -5,6 +5,12 @@
     # A local gitconfig, outside of version control.
     # If the file doesn't exist it is silently ignored
     path = ~/.gitconfig-local
+[includeIf "hasconfig:remote.*.url:*qq123538/dotfiles*"]
+    # Pin personal identity for this dotfiles repo. Matches by remote URL
+    # (path-independent). config/git/identity-personal overrides the work
+    # [user] pulled in above via ~/.gitconfig-local — but only for this repo.
+    # Prerequisite: ~/.gitconfig must not set [user] (it outranks XDG).
+    path = ~/.config/git/identity-personal
 [alias]
     # list all aliases
     la = "!git config -l | grep alias | cut -c 7-"

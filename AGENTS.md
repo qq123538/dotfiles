@@ -199,10 +199,21 @@ changes. Repo: https://github.com/colbymchenry/codegraph
 - WezTerm config (`config/wezterm/wezterm.lua`) retained as backup terminal.
 
 ## git config
-- `config/git/config` -> `~/.gitconfig`. `pull.rebase = true`,
+- `config/git/config` -> `~/.config/git/config` (XDG global gitconfig, read
+  via XDG — not `~/.gitconfig`). `pull.rebase = true`,
   `push.default = current`, pager is `delta`, `core.editor` is `vim`
   (not `nvim`). Credential helper is per-OS via `~/.gitconfig-local`
   (written by `install.sh git` — no hardcoded helper in the committed config).
+- Identity pinning: `config/git/config` has an
+  `[includeIf "hasconfig:remote.*.url:*qq123538/dotfiles*"]` block that
+  pulls in `config/git/identity-personal` (personal `[user]`, GitHub noreply
+  email) for this repo only — matches by remote URL so it survives any clone
+  path. Prerequisite (machine-local, one-time per machine): classic
+  `~/.gitconfig` must NOT set `[user]` (it outranks XDG and would override
+  the includeIf). With it removed, the work identity comes only from
+  `~/.gitconfig-local` (included above), and this repo overrides to personal;
+  other repos keep the work default. No secrets — noreply email is already
+  public via every commit in this repo's history.
 
 ## Linux testing
 `Dockerfile` builds an Ubuntu image injecting SSH keys via
