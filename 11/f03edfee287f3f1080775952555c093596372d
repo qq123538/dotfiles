@@ -1,0 +1,41 @@
+config/nvim/lua/plugins/astrolsp.lua
+  s_04203a1dc0f203::t_c3e5688c177560 223-229
+config/nvim/lua/plugins/ai.lua
+  s_f49b51dd7578fa::t_0f9be9d97c77c0 6
+  s_f49b51dd7578fa::t_69d57b42d14075 7-9
+zsh/tmux.zsh
+  s_d41cf1fb17277c::t_977557e309a3aa 1-17,20-26
+  s_d41cf1fb17277c::t_dd03eb70451a46 18-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.17",
+  "base_commit_sha": "11f03edfee287f3f1080775952555c093596372d",
+  "prompts": {},
+  "sessions": {
+    "s_04203a1dc0f203": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_05d0e71c2ffeVS0OLQ47tdlkoP",
+        "model": "Claude-Sonnet-5"
+      },
+      "human_author": "Wl <55847117+qq123538@users.noreply.github.com>"
+    },
+    "s_d41cf1fb17277c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_05416444bffemjE3j7QQV713Ep",
+        "model": "GLM-5.2-Tencent"
+      },
+      "human_author": "Wl <55847117+qq123538@users.noreply.github.com>"
+    },
+    "s_f49b51dd7578fa": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_059651c98ffevJjtbrSN8ieWs0",
+        "model": "GLM-5.2-Tencent"
+      },
+      "human_author": "Wl <55847117+qq123538@users.noreply.github.com>"
+    }
+  }
+}
