@@ -41,3 +41,13 @@ reaches for the right tool instead of defaulting to a grep/Read crawl.
   structure / call-path / impact-radius questions with `codegraph_explore`
   instead of grepping file-by-file. If no `.codegraph/` index exists,
   CodeGraph will say so — fall back to built-in `grep`/`read`/`glob`.
+- **jira**: for anything Jira-related (search / read / create / update /
+  transition / comment on issues), call the `mcp:jira` tools directly —
+  `jira_search` (JQL), `jira_get_issue`, `jira_create_issue`,
+  `jira_update_issue`, `jira_transition_issue`, `jira_add_comment`. There is
+  no `jira` CLI installed, so do NOT run `which jira` / probe `~/.jira*` /
+  `~/.config/jira*` — that only wastes a turn. When the request is
+  natural-language ("show my open issues"), translate it to a JQL and call
+  `jira_search` (e.g. `assignee = currentUser() AND statusCategory != Done`)
+  rather than shell-probing. Before `jira_create_issue`, run a `jira_search`
+  first (same project + summary keywords) to avoid creating a duplicate.

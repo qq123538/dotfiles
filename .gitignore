@@ -32,7 +32,11 @@ config/opencode/antigravity-accounts.json.*.tmp
 config/opencode/antigravity-accounts.json.lock
 config/opencode/antigravity-signature-cache.json
 config/opencode/antigravity-logs/
+# Work-specific plugins (e.g. git-ai.ts) — machine-generated with hardcoded
+# home paths, only present on work machines via `git-ai install-hooks`.
+config/opencode/plugins/
 
 # CodeGraph per-project indexes — built by `codegraph init` in each code
 # project, never committed here. Safety net in case init is run in this repo.
 .codegraph/
+.git-ai/
