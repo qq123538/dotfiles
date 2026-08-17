@@ -2,9 +2,9 @@
 #
 # Linux-only Brewfile. macOS-specific entries (cask taps, noti, trash,
 # imageoptim, wezterm/1password casks, font casks, koekeishiya tap)
-# have been removed — target environment is WSL2 Ubuntu per AGENTS.md.
-# To re-add mac entries, fork the upstream nicknisi/dotfiles or restore
-# them from git history.
+# have been removed — target environment is Linux (Ubuntu; native or WSL2)
+# per AGENTS.md. To re-add mac entries, fork the upstream nicknisi/dotfiles
+# or restore them from git history.
 
 # Linux clipboard helper (was inside the removed elsif OS.linux? block)
 brew "xclip" # access to clipboard (similar to pbcopy/pbpaste)
@@ -12,7 +12,6 @@ brew "xclip" # access to clipboard (similar to pbcopy/pbpaste)
 # tap "homebrew/bundle" removed — brew bundle is a built-in command since
 # Homebrew 4.0; the tap was deprecated and is now empty.
 # tap "homebrew/core" removed — homebrew/core is auto-tapped since ~2021
-tap "anomalyco/tap" # opencode official tap; homebrew-core's opencode lags and depends on brew node
 
 # packages
 brew "fd" # find alternative
@@ -39,7 +38,7 @@ brew "node"
 brew "repo"
 brew "htop"
 brew "gemini-cli"
-brew "anomalyco/tap/opencode" # AI coding agent CLI/TUI; config in config/opencode/ symlinked by install.sh link
+brew "opencode" # AI coding agent CLI/TUI; homebrew-core formula ships Linux bottles (no source build / compiler dep); version may lag anomalyco/tap but opencode self-updates. Config in config/opencode/ symlinked by install.sh link
 # copilot-cli removed — the formula no longer exists in homebrew-core (the
 # "copilot" formula there is Amazon ECS Copilot, not GitHub's). GitHub's
 # Copilot CLI is now a cask: install manually with
@@ -48,5 +47,5 @@ brew "anomalyco/tap/opencode" # AI coding agent CLI/TUI; config in config/openco
 brew "git-delta"
 brew "atuin" # magical shell history (replaces fzf Ctrl-R history search)
 brew "yazi" # terminal file manager (image preview, async I/O); launch with `y` / `yc`
-brew "chafa" # terminal image renderer; yazi image-preview fallback on WSL2/tmux
+brew "chafa" # terminal image renderer; yazi image-preview fallback on tmux (esp. WSL2 where no native GPU preview exists)
 brew "translate-shell" # command-line translator (provides `trans`), Google Translate + more

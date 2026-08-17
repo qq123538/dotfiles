@@ -25,7 +25,53 @@ and have been fixed, but always verify against the source.
     `BREAKING CHANGE:`/`Co-authored-by:` go in the footer.
   - squash merge copies the PR description into the commit body — a good PR
     description is a readable main history.
-- Target environment: WSL2 (Ubuntu) + Alacritty (primary) / WezTerm (backup) + tmux + Neovim.
+- Target environment: Linux workstation (Ubuntu 22.04; native bare-metal or
+  WSL2). Corporate machines use AD/SSSD directory-service users (not in
+  `/etc/passwd`) — see "Query the working environment first" below.
+  Terminals: Alacritty (primary) / WezTerm (backup) + tmux + Neovim. On
+  Windows hosts the terminals launch WSL via `wsl.exe`; on native Linux
+  they inherit the login shell set by `install.sh shell`.
+
+## Query the working environment first
+**Do not assume WSL2, or any specific host/user model.** Before recommending
+shell-switch commands, sudo-dependent steps, or terminal-launch paths, probe
+the live host. The installer's `is_directory_service_user` uses the same
+probes, so the AI's mental model must match the installer's.
+
+```bash
+# AD/SSSD user vs local /etc/passwd user (matches is_directory_service_user)
+getent -s files passwd "$USER"   # local user if this returns a row
+getent passwd "$USER"            # directory-service if only this returns a row
+
+# WSL vs native Linux
+[ -e /run/WSL ] || [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]   # WSL if true
+cat /proc/sys/kernel/osrelease    # Microsoft kernel string also signals WSL
+cat /etc/os-release               # distro/version
+
+# Tools the installer depends on
+command -v brew; command -v sss_override; command -v chsh
+sudo -n true 2>/dev/null && echo "passwordless sudo" || echo "sudo needs password / unavailable"
+
+# Current login shell (what install.sh shell would try to change)
+getent passwd "$USER" | cut -d: -f7
+```
+
+Decision rules derived from the probes:
+- **Local user** (`getent -s files` returns a row) → `install.sh shell` uses
+  `chsh -s <brew zsh>`. Standard path.
+- **AD/SSSD user** (`getent -s files` empty, `getent` returns a row) +
+  `sss_override` present + passwordless sudo → `install.sh shell` uses
+  `sss_override user-add` (first creation restarts `sssd`, subsequent updates
+  use `sss_cache -u`). This is the corporate-workstation path.
+- **AD/SSSD user without sudo** (or `sss_override` absent) → `install.sh shell`
+  falls back to a sentinel-guarded `~/.bashrc` exec block (interactive
+  terminals only). **Non-interactive sessions (cron, `ssh -c`, `su -`) stay
+  bash** — `$SHELL` is not changed. For a real change the user must ask their
+  AD admin to set `loginShell`.
+- **WSL** → Windows-side terminals (`alacritty.toml`, `wezterm.lua`) launch
+  `wsl.exe`; the WSLg Alacritty path applies. **Native Linux** → those configs
+  do not apply (Alacritty/WezTerm run on the same host and inherit the login
+  shell); do not instruct the user to run the PowerShell soft-link recipe.
 
 ## Symlink install model (core mechanism)
 `install.sh link` symlinks config into `$HOME`:
@@ -43,7 +89,8 @@ it under `config/<tool>/` and re-run `./install.sh link`.
 - `all` runs `link`, `homebrew`, `git`, `ohmyzsh`, `shell`, `codegraph`. It
   does **not** run `backup` — run that manually if needed.
 - The brew subcommand is `homebrew` (not `brew`). It runs `brew bundle` against
-  `Brewfile`, then installs fzf keybindings.
+  `Brewfile`, then installs fzf keybindings. `brew bundle` failures now abort
+  `setup_homebrew` (previously passed through silently on non-zero exit).
 - `git` writes `~/.gitconfig-local` (machine-specific, not in repo).
 - **Fresh-machine prerequisite**: `homebrew` (and thus `all`) needs `sudo` to
   create `/home/linuxbrew/.linuxbrew` when brew isn't yet installed. The
@@ -54,15 +101,36 @@ it under `config/<tool>/` and re-run `./install.sh link`.
   writable by `$USER` → runs `brew bundle` (owner); (3) brew present + prefix
   not writable → skips `brew bundle`, warns, returns 0 (read-only reuse of
   another user's binaries via PATH). This is Homebrew's supported multi-user
-  model — one owner installs, others consume. `setup_shell` similarly probes
-  `sudo -n` before writing `/etc/shells` and degrades gracefully without sudo.
+  model — one owner installs, others consume.
+- **Tiered `setup_shell`** (probes `is_directory_service_user` first):
+  (1) local user in `/etc/passwd` → `chsh -s <brew zsh>` (standard path);
+  (2) AD/SSSD user + `sss_override` present + passwordless sudo →
+  `sss_override user-add` — first creation for the user restarts `sssd` (per
+  `sss_override(8)`, the first override needs an sssd restart to take effect),
+  subsequent updates use `sss_cache -u <user>` (per-user, less disruptive);
+  (3) AD/SSSD user without sudo (or `sss_override` absent) → falls back to a
+  sentinel-guarded `~/.bashrc` exec block (`# >>> dotfiles managed (AD user
+  shell fallback) >>>` … `# <<< ... <<<`) that `exec`s zsh on interactive
+  login. **Non-interactive sessions (cron, `ssh -c`, `su -`) stay bash** in
+  this fallback case — `$SHELL` is not changed; for a real change the user
+  must ask their AD admin to set `loginShell`. `/etc/shells` is still probed
+  first (required by both `chsh` and SSSD shell validation).
+- **`setup_ohmyzsh`** detects incomplete installs by checking for
+  `$ZSH/oh-my-zsh.sh` (not just dir existence). A previously-failed `curl`
+  leaving an empty `$ZSH` dir would otherwise be skipped forever; oh-my-zsh's
+  own installer also aborts on non-empty targets, so incomplete dirs are
+  `rm -rf`'d before re-attempting.
 - **`uninstall.sh`** reverses `install.sh`: removes symlinks (verifying each
   points into `$DOTFILES` via readlink), repo artifacts (`$DOTFILES/zsh/.oh-my-zsh`,
   `$DOTFILES/config/tmux/plugins`), machine-local files (`~/.gitconfig-local`,
   `~/.git-credentials`, `~/.gitconfig` credential.helper, `~/.fzf.zsh`,
-  `~/.codegraph/`), and restores the shell to `/bin/bash`. `--data` also
-  removes nvim/atuin/opencode runtime data with a `yes` confirmation gate.
-  Does NOT uninstall Homebrew (multi-user safety) or delete the repo.
+  `~/.codegraph/`), and **always removes the `~/.bashrc` fallback block** if
+  present. Shell restore is tiered: AD/SSSD users get `sss_override user-del`
+  (restores AD-defined shell, which may or may not be `/bin/bash` — not
+  forced, that's an AD-admin concern); local users get `chsh -s /bin/bash`.
+  `--data` also removes nvim/atuin/opencode runtime data with a `yes`
+  confirmation gate. Does NOT uninstall Homebrew (multi-user safety) or
+  delete the repo. `/etc/shells` left untouched (other users may need it).
 
 ## zsh wiring
 - `$DOTFILES` (set in `zsh/zshenv.symlink` via readlink resolution) = repo root.
@@ -185,11 +253,17 @@ changes. Repo: https://github.com/colbymchenry/codegraph
 - Pane navigation: `M-h/j/k/l` (no prefix) via tmux.nvim, seamless with neovim.
 
 ## Alacritty (primary terminal)
-- Config at `config/alacritty/alacritty.toml` -> `~/.config/alacritty/` via `install.sh link`
-  (WSLg fallback path). Windows build reads `%APPDATA%\alacritty\alacritty.toml`; soft-link
-  that to the repo file via `\\wsl.localhost\<distro>\home\<user>\dotfiles\config\alacritty\alacritty.toml`
-  so the repo stays the single source of truth.
-- Default shell launches `wsl.exe ~ -d Ubuntu-22.04` directly (no launch_menu like WezTerm).
+- Config at `config/alacritty/alacritty.toml` -> `~/.config/alacritty/` via
+  `install.sh link` (the Linux build's native path). On **Windows hosts** the
+  Windows build reads `%APPDATA%\alacritty\alacritty.toml`; soft-link that
+  to the repo file via
+  `\\wsl.localhost\<distro>\home\<user>\dotfiles\config\alacritty\alacritty.toml`
+  so the repo stays the single source of truth. On **native Linux hosts**
+  Alacritty runs on the same host as the shell and inherits the login shell
+  set by `install.sh shell` — the `wsl.exe` line in the committed config is
+  a Windows-deployment concern and is simply not exercised on native Linux.
+- Default shell launches `wsl.exe ~ -d Ubuntu-22.04` directly (no launch_menu
+  like WezTerm) — applies on Windows hosts only.
 - `TERM=alacritty` is set in `[env]` (the alacritty terminfo is available
   via Linuxbrew ncurses 6.6); tmux's `alacritty:Tc` override handles TrueColor.
 - OSC52 clipboard works natively — `"+y` in nvim reaches the Windows clipboard through
