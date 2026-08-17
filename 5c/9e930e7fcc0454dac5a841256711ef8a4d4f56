@@ -1,0 +1,31 @@
+AGENTS.md
+  s_a49240acd6e8ab::t_1cf232503678d5 28-74
+  s_a49240acd6e8ab::t_f1dd3dfb33b3b7 92-93,104-122,127-133
+  s_a49240acd6e8ab::t_45fe05428c4281 256-266
+Brewfile
+  s_a49240acd6e8ab::t_23438219c7d517 5-7
+  s_a49240acd6e8ab::t_5155356c4bda64 50
+README.md
+  s_a49240acd6e8ab::t_d26b68ee588e64 114-131
+  s_a49240acd6e8ab::t_0a72a7f23213e5 417
+  s_a49240acd6e8ab::t_ba83ea95379ceb 522
+  s_a49240acd6e8ab::t_d9561d35b2258f 296,302,313,320
+  s_a49240acd6e8ab::t_3e1bc333d2d2a0 29-33
+  s_a49240acd6e8ab::t_f42f5628d4c123 453
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.17",
+  "base_commit_sha": "5c9e930e7fcc0454dac5a841256711ef8a4d4f56",
+  "prompts": {},
+  "sessions": {
+    "s_a49240acd6e8ab": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ff0f6e178ffe9ww152OwImPkP2",
+        "model": "GLM-5.2-Tencent"
+      },
+      "human_author": "Wl <55847117+qq123538@users.noreply.github.com>"
+    }
+  }
+}
