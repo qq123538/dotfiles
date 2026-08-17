@@ -26,7 +26,11 @@ Finally, run tmux, and install tmux plugins with `M-s I` (prefix + Shift+I).
 
 `uninstall.sh` reverses `install.sh` — removes the symlinks, repo-managed
 artifacts (oh-my-zsh, TPM plugins), machine-local files (`~/.gitconfig-local`,
-`~/.fzf.zsh`, `~/.codegraph/`), and restores the login shell to `/bin/bash`.
+`~/.fzf.zsh`, `~/.codegraph/`), and restores the login shell. Shell restore is
+tiered to match `install.sh`: **local users** get `chsh -s /bin/bash`; **AD/SSSD
+users** get `sss_override user-del` (removes the override, restoring the
+AD-defined shell — which may or may not be `/bin/bash`, that's an AD-admin
+concern). The `~/.bashrc` zsh exec fallback block is always removed if present.
 
 ```bash
 ./uninstall.sh           # config + machine-local + shell
@@ -107,7 +111,24 @@ Once homebrew is installed, it executes the `brew bundle` command which will ins
 ./install.sh shell
 ```
 
-The `shell` command sets up the recommended shell configuration for the dotfiles setup. Specifically, it sets the shell to [zsh](https://www.zsh.org/) using the `chsh` command.
+The `shell` command sets the login shell to [zsh](https://www.zsh.org/). The
+path is tiered so it works on corporate machines where the user is a
+directory-service account (AD/SSSD/LDAP, not in `/etc/passwd`):
+
+1. **Local user** (`/etc/passwd` entry) → `chsh -s <zsh>` (standard path).
+2. **AD/SSSD user** with `sss_override` + passwordless sudo →
+   `sss_override user-add` (creates a per-user SSSD cache override; does not
+   touch AD). First-time creation for the user restarts `sssd`; subsequent
+   updates use `sss_cache -u <user>` (less disruptive).
+3. **AD/SSSD user without sudo** (or `sss_override` absent) → falls back to a
+   sentinel-guarded `~/.bashrc` block that `exec`s zsh on interactive login.
+   **Non-interactive sessions (cron, `ssh -c`, `su -`) stay bash** in this
+   case — `$SHELL` is not changed. For a real shell change, ask your AD admin
+   to set `loginShell`.
+
+`/etc/shells` is probed first (required by both `chsh` and SSSD shell
+validation); if the brew zsh path isn't listed and sudo is unavailable, the
+script prints the manual command to run.
 
 ### `all`
 
@@ -272,13 +293,13 @@ All plugins are listed in the [lua/plugins/ directory](./config/nvim/lua/plugins
 
 ## Terminal emulator
 
-[Alacritty](https://alacritty.org/) is the primary terminal; [WezTerm](https://wezfurlong.org/wezterm/) is retained as a backup. Both run on the Windows side and launch WSL via `wsl.exe`.
+[Alacritty](https://alacritty.org/) is the primary terminal; [WezTerm](https://wezfurlong.org/wezterm/) is retained as a backup. On **Windows hosts**, both run on the Windows side and launch WSL via `wsl.exe`; on **native Linux hosts**, both run on the same host as the shell and inherit the login shell set by `install.sh shell` (the `wsl.exe` lines in the committed configs are simply not exercised).
 
 ### Alacritty (primary)
 
 Config lives at `config/alacritty/alacritty.toml` (TOML). Campbell colors (inlined), JetBrainsMono Nerd Font at 14pt, 120×28 initial window, 2px padding, `Ctrl+Click` URL hints.
 
-`install.sh link` symlinks `config/alacritty` to `~/.config/alacritty/` (used by the WSLg Linux build). The Windows build reads `%APPDATA%\alacritty\alacritty.toml` instead, so soft-link that to the repo file to keep a single source of truth:
+`install.sh link` symlinks `config/alacritty` to `~/.config/alacritty/` (the Linux build's native path). On **Windows hosts** the Windows build reads `%APPDATA%\alacritty\alacritty.toml` instead, so soft-link that to the repo file to keep a single source of truth:
 
 ```powershell
 winget install Alacritty.Alacritty
@@ -289,14 +310,14 @@ New-Item -ItemType SymbolicLink `
 ```
 
 Notes:
-- Default shell is `wsl.exe ~ -d Ubuntu-22.04` (no launch_menu — Alacritty has no GUI launcher).
+- On Windows hosts, default shell is `wsl.exe ~ -d Ubuntu-22.04` (no launch_menu — Alacritty has no GUI launcher). On native Linux, Alacritty inherits the login shell.
 - `TERM` is set to `alacritty` (the terminfo is available via Linuxbrew ncurses 6.6); tmux's `alacritty:Tc` override handles TrueColor.
 - OSC52 clipboard works natively — `"+y` in nvim reaches the Windows clipboard through tmux `set-clipboard external`, with zero config.
 - No tab support by design — use tmux.
 
 ### WezTerm (backup)
 
-Config at `config/wezterm/wezterm.lua`. Kept as a fallback terminal; default program is PowerShell with a WSL entry in the launch menu.
+Config at `config/wezterm/wezterm.lua`. Kept as a fallback terminal; on Windows hosts the default program is PowerShell with a WSL entry in the launch menu. On native Linux it inherits the login shell.
 
 ## tmux configuration
 
@@ -393,7 +414,7 @@ See the [Atuin docs](https://docs.atuin.sh/) for full reference.
 
 ### Installation
 
-Yazi and `chafa` (image-preview fallback for WSL2/tmux) are listed in the [Brewfile](./Brewfile) and installed by `./install.sh homebrew`. The config is symlinked to `~/.config/yazi/` by `./install.sh link`, and the shell integration (`zsh/yazi.zsh`) is auto-sourced by `zshrc.symlink`.
+Yazi and `chafa` (image-preview fallback for tmux, especially on WSL2 where no native GPU preview is available) are listed in the [Brewfile](./Brewfile) and installed by `./install.sh homebrew`. The config is symlinked to `~/.config/yazi/` by `./install.sh link`, and the shell integration (`zsh/yazi.zsh`) is auto-sourced by `zshrc.symlink`.
 
 ### Shell commands
 
@@ -429,7 +450,7 @@ No `theme.toml` is shipped (yazi's built-in dark theme matches the terminal).
 ### Practical usage
 
 1. **`yc`** — open yazi, browse with `hjkl`, `q` to exit back into the cwd you left. The single most useful thing: yazi as a "where did I put that file" tool that leaves you positioned correctly when you quit.
-2. **Image previews** — yazi's killer feature. On WSL2 + Alacritty (or wezterm) + tmux, the `chafa` fallback renders images as ANSI block art. Scan a folder of screenshots without leaving the terminal.
+2. **Image previews** — yazi's killer feature. On tmux (WSL2 or native Linux) + Alacritty (or wezterm), the `chafa` fallback renders images as ANSI block art. Scan a folder of screenshots without leaving the terminal.
 3. **Code previews** — press `K` / `J` to scroll the preview pane; yazi renders files with syntax highlighting and the directory tree on the right.
 4. **Open in nvim from yazi** — `Enter` / `o` opens the highlighted file in nvim (text files only; images open via `xdg-open`).
 5. **`,g` from inside yazi** — spawns lazygit in the current pane's dir, without leaving yazi.
@@ -498,7 +519,7 @@ This will open a bash shell in the container which can then be used to manually 
 
 ## Preferred software
 
-- [Alacritty](https://alacritty.org/) - GPU-accelerated terminal emulator (primary); cross-platform, TOML config, native OSC52 clipboard for WSL2
+- [Alacritty](https://alacritty.org/) - GPU-accelerated terminal emulator (primary); cross-platform, TOML config, native OSC52 clipboard
 - [WezTerm](https://wezfurlong.org/wezterm/) - GPU-accelerated terminal emulator (backup); good tmux and WSL2 support
 - [tmux](https://github.com/tmux/tmux) - Terminal multiplexer
 - [Neovim](https://neovim.io/) - Hyper-extensible Vim-based text editor

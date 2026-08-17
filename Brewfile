@@ -2,9 +2,9 @@
 #
 # Linux-only Brewfile. macOS-specific entries (cask taps, noti, trash,
 # imageoptim, wezterm/1password casks, font casks, koekeishiya tap)
-# have been removed — target environment is WSL2 Ubuntu per AGENTS.md.
-# To re-add mac entries, fork the upstream nicknisi/dotfiles or restore
-# them from git history.
+# have been removed — target environment is Linux (Ubuntu; native or WSL2)
+# per AGENTS.md. To re-add mac entries, fork the upstream nicknisi/dotfiles
+# or restore them from git history.
 
 # Linux clipboard helper (was inside the removed elsif OS.linux? block)
 brew "xclip" # access to clipboard (similar to pbcopy/pbpaste)
@@ -47,5 +47,5 @@ brew "opencode" # AI coding agent CLI/TUI; homebrew-core formula ships Linux bot
 brew "git-delta"
 brew "atuin" # magical shell history (replaces fzf Ctrl-R history search)
 brew "yazi" # terminal file manager (image preview, async I/O); launch with `y` / `yc`
-brew "chafa" # terminal image renderer; yazi image-preview fallback on WSL2/tmux
+brew "chafa" # terminal image renderer; yazi image-preview fallback on tmux (esp. WSL2 where no native GPU preview exists)
 brew "translate-shell" # command-line translator (provides `trans`), Google Translate + more
