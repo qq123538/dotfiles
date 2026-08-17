@@ -165,7 +165,9 @@ setup_homebrew() {
     fi
 
     # install brew dependencies from Brewfile
-    brew bundle
+    if ! brew bundle; then
+        error "brew bundle failed. See output above."
+    fi
 
     # install fzf
     echo -e
@@ -173,25 +175,152 @@ setup_homebrew() {
     "$(brew --prefix)"/opt/fzf/install --key-bindings --completion --no-update-rc --no-bash --no-fish
 }
 
+# Detect whether $USER is a directory-service user (AD/SSSD/LDAP) rather than
+# a local /etc/passwd entry. `getent -s files` queries only /etc/passwd
+# (bypasses SSSD), so a user resolvable via NSS but absent from /etc/passwd is
+# a directory-service user — for whom `chsh` fails ("user does not exist in
+# /etc/passwd"). Returns 0 = directory-service, 1 = local, 2 = not found.
+is_directory_service_user() {
+    if getent -s files passwd "$USER" >/dev/null 2>&1; then
+        return 1
+    fi
+    if getent passwd "$USER" >/dev/null 2>&1; then
+        return 0
+    fi
+    return 2
+}
+
+# Set login shell for an AD/SSSD user via SSSD's client-side view
+# (sss_override user-add). Creates a per-user local override in the SSSD
+# cache; does not touch AD or /etc/passwd. Requires sudo. Returns 0 on
+# success, non-zero otherwise.
+try_sss_override() {
+    local zsh_path="$1"
+
+    if ! command -v sss_override >/dev/null 2>&1; then
+        warning "sss_override not found — cannot use SSSD override path."
+        return 1
+    fi
+    if ! sudo -n true 2>/dev/null; then
+        warning "sudo required for sss_override but not available passwordlessly."
+        warning "Run: sudo sss_override user-add '$USER' -s '$zsh_path'"
+        return 1
+    fi
+
+    # Detect first-time override creation. Per sss_override(8), the FIRST
+    # override requires `systemctl restart sssd` to take effect (sss_override
+    # itself prints "SSSD needs to be restarted"); subsequent updates only
+    # need `sss_cache -u <user>` (per-user, less disruptive). user-show
+    # exits non-zero when no override exists yet.
+    local first_creation=0
+    if ! sudo sss_override user-show "$USER" >/dev/null 2>&1; then
+        first_creation=1
+    fi
+
+    info "Setting login shell via SSSD override (sss_override user-add)."
+    if ! sudo sss_override user-add "$USER" -s "$zsh_path"; then
+        warning "sss_override user-add failed."
+        return 1
+    fi
+
+    if [[ "$first_creation" -eq 1 ]]; then
+        info "First SSSD override for $USER — restarting sssd to take effect."
+        if sudo systemctl restart sssd; then
+            info "sssd restarted."
+        else
+            warning "Failed to restart sssd; new shell may not take effect until next SSSD restart."
+        fi
+    else
+        if sudo sss_cache -u "$USER" 2>/dev/null; then
+            info "SSSD cache refreshed for $USER."
+        else
+            warning "sss_cache failed; falling back to 'systemctl restart sssd'."
+            sudo systemctl restart sssd || warning "Failed to restart sssd."
+        fi
+    fi
+
+    local actual_shell
+    actual_shell="$(getent passwd "$USER" | cut -d: -f7)"
+    if [[ "$actual_shell" == "$zsh_path" ]]; then
+        success "Login shell set to $zsh_path via SSSD override (takes effect on next login)."
+        return 0
+    else
+        warning "sss_override ran but getent still reports shell='$actual_shell'."
+        warning "Try: sudo systemctl restart sssd"
+        return 1
+    fi
+}
+
+# Append a sentinel-guarded block to ~/.bashrc that execs zsh on interactive
+# login. Used when chsh and sss_override are both unavailable (e.g. AD user
+# without sudo). Idempotent via sentinel comments; uninstall.sh removes the
+# block. Mirrors the ~/.fzf.zsh machine-local file pattern.
+write_bashrc_zsh_fallback() {
+    local zsh_path="$1"
+    local bashrc="$HOME/.bashrc"
+    local sentinel="# >>> dotfiles managed (AD user shell fallback) >>>"
+    local sentinel_end="# <<< dotfiles managed (AD user shell fallback) <<<"
+
+    if grep -qF "$sentinel" "$bashrc" 2>/dev/null; then
+        info "~/.bashrc zsh fallback block already present — skipping."
+        return 0
+    fi
+
+    info "Writing zsh exec fallback to ~/.bashrc (chsh/sss_override unavailable)."
+    cat >> "$bashrc" <<EOF
+
+$sentinel
+# chsh unavailable for directory-service user; replace login bash with zsh.
+# Remove this block or run 'chsh -s $zsh_path' if you gain /etc/passwd access.
+if [[ -z "\$ZSH_VERSION" && -t 1 ]] && [[ -x "$zsh_path" ]]; then
+  export SHELL="$zsh_path"
+  exec "$zsh_path" -l
+fi
+$sentinel_end
+EOF
+}
+
 setup_shell() {
     title "Configuring shell"
 
     [[ -n "$(command -v brew)" ]] && zsh_path="$(brew --prefix)/bin/zsh" || zsh_path="$(which zsh)"
+
+    # 1. /etc/shells — required by chsh and for SSSD shell validation.
     if ! grep -q "$zsh_path" /etc/shells 2>/dev/null; then
         info "adding $zsh_path to /etc/shells"
         if sudo -n true 2>/dev/null; then
             echo "$zsh_path" | sudo tee -a /etc/shells >/dev/null
         else
-            warning "Cannot write to /etc/shells without sudo. Run this manually as an admin:"
+            warning "Cannot write to /etc/shells without sudo. Run as admin:"
             warning "  echo '$zsh_path' | sudo tee -a /etc/shells"
-            warning "Then re-run './install.sh shell', or run 'chsh -s $zsh_path' directly if the path is already listed."
+            warning "Then re-run './install.sh shell'."
         fi
     fi
 
-    if [[ "$SHELL" != "$zsh_path" ]]; then
+    # 2. Already the target shell — nothing to do.
+    if [[ "$SHELL" == "$zsh_path" ]]; then
+        info "Login shell is already $zsh_path — nothing to do."
+        return 0
+    fi
+
+    # 3. Tiered switch: local user -> chsh; AD/SSSD -> sss_override;
+    #    fallback -> ~/.bashrc exec block (interactive terminals only).
+    if is_directory_service_user; then
+        info "User '$USER' is a directory-service user (not in /etc/passwd)."
+        if grep -q "$zsh_path" /etc/shells 2>/dev/null && try_sss_override "$zsh_path"; then
+            return 0
+        fi
+        warning "Falling back to ~/.bashrc zsh exec (interactive terminals only)."
+        warning "\$SHELL stays $(basename "$SHELL"); non-interactive sessions (cron/ssh -c) stay bash."
+        warning "For a real shell change: ask your AD admin to set loginShell='$zsh_path'."
+        write_bashrc_zsh_fallback "$zsh_path"
+    else
         if grep -q "$zsh_path" /etc/shells 2>/dev/null; then
-            chsh -s "$zsh_path"
-            info "default shell changed to $zsh_path"
+            if chsh -s "$zsh_path"; then
+                info "default shell changed to $zsh_path (takes effect on next login)."
+            else
+                error "chsh failed for local user '$USER'. Check the error above."
+            fi
         else
             warning "Skipped chsh: $zsh_path is not in /etc/shells. Add it first (see above)."
         fi
@@ -223,11 +352,18 @@ setup_ohmyzsh() {
     ZSH="${ZSH:-$DOTFILES/zsh/.oh-my-zsh}"
     ZSH_CUSTOM="${ZSH_CUSTOM:-$ZSH/custom}"
 
-    if ! [[ -d "$ZSH" ]]; then
+    # 检测关键文件而非仅目录——避免不完整安装（目录存在但 oh-my-zsh.sh 缺失，
+    # 如先前 curl 失败留下空目录）被永远跳过。oh-my-zsh install.sh 在目标非空时
+    # 会 abort，故先清理不完整目录。
+    if ! [[ -f "$ZSH/oh-my-zsh.sh" ]]; then
+        if [[ -d "$ZSH" ]]; then
+            info "Removing incomplete oh-my-zsh directory (missing oh-my-zsh.sh)."
+            rm -rf "$ZSH"
+        fi
         info "install ohmyzsh"
         RUNZSH="no" KEEP_ZSHRC="yes" ZSH="$DOTFILES/zsh/.oh-my-zsh" sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     else
-        info  "ohmyzsh have already installed"
+        info "ohmyzsh already installed"
     fi
 
     if ! [[ -d "$ZSH_CUSTOM/themes/powerlevel10k" ]]; then

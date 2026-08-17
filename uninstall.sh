@@ -159,24 +159,85 @@ remove_machine_local() {
     fi
 }
 
+# Detect whether $USER is a directory-service user (AD/SSSD/LDAP) rather than
+# a local /etc/passwd entry. `getent -s files` queries only /etc/passwd
+# (bypasses SSSD), so a user resolvable via NSS but absent from /etc/passwd is
+# a directory-service user. Returns 0 = directory-service, 1 = local, 2 = not
+# found. Duplicated from install.sh (both scripts standalone).
+is_directory_service_user() {
+    if getent -s files passwd "$USER" >/dev/null 2>&1; then
+        return 1
+    fi
+    if getent passwd "$USER" >/dev/null 2>&1; then
+        return 0
+    fi
+    return 2
+}
+
+# Remove the ~/.bashrc zsh exec fallback block that install.sh writes when
+# chsh/sss_override are unavailable. Idempotent: no-op if absent. Sentinel
+# comments delimit the block; sed deletes the start..end range (inclusive).
+# Sentinels contain no regex metacharacters, so the pattern is safe as-is.
+remove_bashrc_zsh_fallback() {
+    local bashrc="$HOME/.bashrc"
+    local sentinel="# >>> dotfiles managed (AD user shell fallback) >>>"
+    local sentinel_end="# <<< dotfiles managed (AD user shell fallback) <<<"
+
+    [ -f "$bashrc" ] || return 0
+    grep -qF "$sentinel" "$bashrc" 2>/dev/null || return 0
+
+    info "Removing ~/.bashrc zsh fallback block"
+    sed -i "/^${sentinel}\$/,/^${sentinel_end}\$/d" "$bashrc"
+}
+
 restore_shell() {
     title "Restoring login shell"
 
+    # 1. Always remove ~/.bashrc zsh fallback block (idempotent; may have been
+    #    written by install.sh when chsh/sss_override were unavailable).
+    remove_bashrc_zsh_fallback
+
+    # 2. Restore login shell. For AD/SSSD users, removing the sss_override
+    #    restores the AD-defined shell (the pre-install state). For local
+    #    users, chsh back to /bin/bash.
     if [ "$SHELL" = "/bin/bash" ]; then
         info "Login shell is already /bin/bash — nothing to do."
         return 0
     fi
 
-    if ! command -v chsh >/dev/null 2>&1; then
-        warning "chsh not found — cannot restore shell. Run 'chsh -s /bin/bash' manually."
-        return 0
-    fi
-
-    info "Changing login shell back to /bin/bash"
-    if chsh -s /bin/bash; then
-        success "Login shell changed to /bin/bash (takes effect on next login)."
+    if is_directory_service_user; then
+        # AD/SSSD user: remove SSSD override (undoes install.sh's sss_override
+        # user-add). Restores AD-defined shell, which may or may not be
+        # /bin/bash — we don't force it (that's an AD-admin concern).
+        if ! command -v sss_override >/dev/null 2>&1; then
+            warning "sss_override not found — cannot remove SSSD override."
+            warning "Run manually: sudo sss_override user-del '$USER'"
+            return 0
+        fi
+        if ! sudo -n true 2>/dev/null; then
+            warning "sudo required to remove SSSD override but not available."
+            warning "Run manually: sudo sss_override user-del '$USER'"
+            return 0
+        fi
+        info "Removing SSSD override for $USER (restores AD-defined shell)."
+        if sudo sss_override user-del "$USER" 2>/dev/null; then
+            sudo sss_cache -u "$USER" 2>/dev/null || sudo systemctl restart sssd 2>/dev/null || true
+            success "SSSD override removed. Next login uses AD-defined shell."
+        else
+            warning "sss_override user-del failed (override may not have existed)."
+        fi
     else
-        warning "chsh failed. Run 'chsh -s /bin/bash' manually."
+        # Local user: chsh back to /bin/bash (existing behavior).
+        if ! command -v chsh >/dev/null 2>&1; then
+            warning "chsh not found — cannot restore shell. Run 'chsh -s /bin/bash' manually."
+            return 0
+        fi
+        info "Changing login shell back to /bin/bash"
+        if chsh -s /bin/bash; then
+            success "Login shell changed to /bin/bash (takes effect on next login)."
+        else
+            warning "chsh failed. Run 'chsh -s /bin/bash' manually."
+        fi
     fi
     # /etc/shells is intentionally left untouched (other users may need the entry).
 }

@@ -12,7 +12,6 @@ brew "xclip" # access to clipboard (similar to pbcopy/pbpaste)
 # tap "homebrew/bundle" removed — brew bundle is a built-in command since
 # Homebrew 4.0; the tap was deprecated and is now empty.
 # tap "homebrew/core" removed — homebrew/core is auto-tapped since ~2021
-tap "anomalyco/tap" # opencode official tap; homebrew-core's opencode lags and depends on brew node
 
 # packages
 brew "fd" # find alternative
@@ -39,7 +38,7 @@ brew "node"
 brew "repo"
 brew "htop"
 brew "gemini-cli"
-brew "anomalyco/tap/opencode" # AI coding agent CLI/TUI; config in config/opencode/ symlinked by install.sh link
+brew "opencode" # AI coding agent CLI/TUI; homebrew-core formula ships Linux bottles (no source build / compiler dep); version may lag anomalyco/tap but opencode self-updates. Config in config/opencode/ symlinked by install.sh link
 # copilot-cli removed — the formula no longer exists in homebrew-core (the
 # "copilot" formula there is Amazon ECS Copilot, not GitHub's). GitHub's
 # Copilot CLI is now a cask: install manually with
