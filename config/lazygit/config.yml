@@ -1,0 +1,17 @@
+# Clipboard: use xclip with setsid so the daemonized xclip owner process
+# survives the teardown of the terminal job that spawned it.
+#
+# Why setsid: when lazygit runs inside Neovim's built-in terminal (snacks.nvim
+# floating terminal), closing the window/pressing q kills lazygit's process
+# group and closes the pty. xclip's owner daemon (spawned by `xclip -in`,
+# which holds the X11 CLIPBOARD ownership and serves paste requests) lives in
+# that same session and gets killed too, silently clearing the clipboard.
+# setsid detaches it into its own session so it survives — matching the
+# behavior of running lazygit directly in a tmux pane, where the shell keeps
+# the session alive after lazygit exits.
+#
+# Note: once copyToClipboardCmd is set, lazygit also uses
+# readFromClipboardCmd for pasting, so both must be configured together.
+os:
+  copyToClipboardCmd: printf '%s' {{text}} | setsid xclip -selection clipboard >/dev/null 2>&1
+  readFromClipboardCmd: xclip -selection clipboard -o
