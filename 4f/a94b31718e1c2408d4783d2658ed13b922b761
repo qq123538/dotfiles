@@ -1,0 +1,19 @@
+config/lazygit/config.yml
+  s_9b3a5e83a6c944::t_83b56f42fcc56b 1-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "4fa94b31718e1c2408d4783d2658ed13b922b761",
+  "prompts": {},
+  "sessions": {
+    "s_9b3a5e83a6c944": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fdd24d72bffeLIgCjcRx0SNyqJ",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    }
+  }
+}
