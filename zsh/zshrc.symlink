@@ -1,3 +1,18 @@
+# Auto-attach tmux on interactive SSH login. Must run ABOVE the p10k instant
+# prompt block: while instant prompt is active it redirects stdout away from
+# the tty for the rest of this file, so a `-t 1` guard later would always be
+# false (silent no-op) and `tmux attach` would not get a usable terminal.
+# Closing a Windows Terminal tab with × kills the ssh client but the
+# server-side session persists — this skips the manual `tmux attach`.
+# Guards: not inside tmux, SSH session only, real TTY, opt out with
+# TMUX_NO_AUTO_ATTACH=1. No exec — detaching (M-s d) resumes this rc and
+# lands in the login shell. Plain attach-session targets the most recently
+# used session; new-session is the server-dead fallback (continuum then
+# restores the last save alongside it).
+if [[ -z "$TMUX" && -n "$SSH_CONNECTION" && -t 1 && -z "$TMUX_NO_AUTO_ATTACH" ]] && (( $+commands[tmux] )); then
+  tmux attach-session 2>/dev/null || tmux new-session
+fi
+
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
