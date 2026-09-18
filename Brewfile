@@ -23,5 +23,6 @@ brew "opencode" # AI coding agent CLI/TUI; homebrew-core formula ships Linux bot
 brew "git-delta"
 brew "atuin" # magical shell history (replaces fzf Ctrl-R history search)
 brew "yazi" # terminal file manager (image preview, async I/O); launch with `y` / `yc`
+brew "zoxide" # smarter cd (`z`/`zi`); db at ~/.local/share/zoxide, fed by chpwd hook in zsh/zoxide.zsh; also powers yazi's `Z` key
 brew "chafa" # terminal image renderer; yazi image-preview fallback on tmux (esp. WSL2 where no native GPU preview exists)
 brew "translate-shell" # command-line translator (provides `trans`), Google Translate + more
