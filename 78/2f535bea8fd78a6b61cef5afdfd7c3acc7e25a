@@ -1,0 +1,37 @@
+zsh/zshenv.symlink
+  s_b50cfe751a5b82::t_260991a2d93282 40-44,48
+  s_0a1b894eac5e83::t_b5797d857464a4 10-14,16-18,25-30
+Brewfile
+  s_b50cfe751a5b82::t_ac120f148a1bcb 19
+install.sh
+  s_0a1b894eac5e83::t_5ec9a801d6718c 304-313
+  s_0a1b894eac5e83::t_5affc8af1f8486 127,130-136
+  s_0a1b894eac5e83::t_7e4dce0562ed01 164-167
+  s_0a1b894eac5e83::t_645b924831ffb0 140-146
+uninstall.sh
+  s_0a1b894eac5e83::t_3dea8f78bf2850 14-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "782f535bea8fd78a6b61cef5afdfd7c3acc7e25a",
+  "prompts": {},
+  "sessions": {
+    "s_0a1b894eac5e83": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fac903cbbffeomfQ5aBWDqJitz",
+        "model": "Kimi-K3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    },
+    "s_b50cfe751a5b82": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_faa8fc6bcffehtY5eCpMzMlLoZ",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    }
+  }
+}
