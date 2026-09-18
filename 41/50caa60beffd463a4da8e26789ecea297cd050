@@ -1,0 +1,22 @@
+zsh/zshrc.symlink
+  s_0a1b894eac5e83::t_393c7cd02502ec 1-15
+zsh/tmux.zsh
+  s_0a1b894eac5e83::t_789e120f2d9caa 54-57
+  s_0a1b894eac5e83::t_6c186657c996fa 53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "4150caa60beffd463a4da8e26789ecea297cd050",
+  "prompts": {},
+  "sessions": {
+    "s_0a1b894eac5e83": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fac903cbbffeomfQ5aBWDqJitz",
+        "model": "Kimi-K3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    }
+  }
+}
