@@ -1,0 +1,30 @@
+config/nvim/lua/community.lua
+  s_46a15818fde4a6::t_6e1e25a90739ad 15
+config/nvim/lua/plugins/astrolsp.lua
+  s_0a1b894eac5e83::t_5aa250d96940f5 55,60-63
+  s_46a15818fde4a6::t_f56c825b7d5aa3 220-237
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b17d1d2c15516719a2c086fa131f5c76d42308ca",
+  "prompts": {},
+  "sessions": {
+    "s_0a1b894eac5e83": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fac903cbbffeomfQ5aBWDqJitz",
+        "model": "Kimi-K3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    },
+    "s_46a15818fde4a6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f95fadbabffeIKlB0jmqGgk4FJ",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    }
+  }
+}
