@@ -124,12 +124,26 @@ setup_homebrew() {
     # Put any existing brew on PATH before deciding what to do. shellenv only
     # reads the prefix, so this is safe for non-owner users too.
     if [ "$(uname)" == "Linux" ]; then
+        # Each shellenv prepends to PATH, so ~/brew is eval'd LAST to win.
         test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
         test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        if test -d ~/brew; then
+            eval "$(~/brew/bin/brew shellenv)"
+            # Non-default prefix, shorter than the 25-char bottled prefix:
+            # opt in to pinned-bottle relocation or hubs like openssl@3
+            # build from source (plans/relocatable-bottles.md).
+            export HOMEBREW_RELOCATE_BUILD_PREFIX=1
+        fi
     fi
 
     if test ! "$(command -v brew)"; then
-        # brew absent (fresh machine). Download-then-run instead of piping so
+        # brew absent (fresh machine). On hosts where a new top-level dir under
+        # /home is not allowed (admin policy), skip this branch entirely:
+        #     git clone https://github.com/Homebrew/brew ~/brew
+        # then re-run './install.sh homebrew' — the ~/brew detection above picks
+        # it up (with HOMEBREW_RELOCATE_BUILD_PREFIX=1 so pinned bottles
+        # relocate into the shorter prefix instead of building from source).
+        # Download-then-run instead of piping so
         # bash keeps a TTY stdin: the Homebrew installer then stays interactive
         # and can prompt for the sudo password it needs to create the supported
         # /home/linuxbrew/.linuxbrew prefix. Piping (curl | bash) forces
@@ -147,6 +161,10 @@ setup_homebrew() {
         if [ "$(uname)" == "Linux" ]; then
             test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
             test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+            if test -d ~/brew; then
+                eval "$(~/brew/bin/brew shellenv)"
+                export HOMEBREW_RELOCATE_BUILD_PREFIX=1
+            fi
         fi
     fi
 
@@ -283,7 +301,16 @@ EOF
 setup_shell() {
     title "Configuring shell"
 
-    [[ -n "$(command -v brew)" ]] && zsh_path="$(brew --prefix)/bin/zsh" || zsh_path="$(which zsh)"
+    # realpath the brew prefix: brew's default-prefix snap-back (brew.sh) can
+    # report a symlinked path (e.g. /home/linuxbrew/.linuxbrew -> ~/.linuxbrew).
+    # The SSSD login shell must point at the REAL file — if the symlink is
+    # later deleted (e.g. a jenkins cleanup wiping /home/linuxbrew), a
+    # symlinked zsh path breaks login entirely (no shell_fallback configured).
+    if [[ -n "$(command -v brew)" ]]; then
+        zsh_path="$(realpath "$(brew --prefix)")/bin/zsh"
+    else
+        zsh_path="$(which zsh)"
+    fi
 
     # 1. /etc/shells — required by chsh and for SSSD shell validation.
     if ! grep -q "$zsh_path" /etc/shells 2>/dev/null; then
