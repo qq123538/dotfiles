@@ -1,0 +1,31 @@
+zsh/zoxide.zsh
+  s_ca51aac3419336::t_6592d60bde7613 1-13
+Brewfile
+  s_af505f9203efc5::t_240f619b39dc31 50
+config/yazi/init.lua
+  s_ca51aac3419336::t_a8a84cedb433e6 1-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "46acbfc0328951198ff3c9447716cf47e8caffde",
+  "prompts": {},
+  "sessions": {
+    "s_af505f9203efc5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f4da0b69bffeVzIBVorF6HHt54",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    },
+    "s_ca51aac3419336": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fa56f2ce9fferQEsDPBjNcs0PJ",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    }
+  }
+}
