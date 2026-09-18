@@ -7,16 +7,27 @@ export CACHEDIR="$HOME/.local/share"
 export VIM_TMP="$HOME/.vim-tmp"
 # Homebrew/Linuxbrew shellenv — belongs in .zshenv (not .zprofile) because every
 # shell mode (non-login interactive, scripts, nvim :terminal, cron) needs the
-# linuxbrew PATH on PATH. The outer guard on HOMEBREW_PREFIX makes it idempotent:
-# subshells inherit the var and skip the re-eval. The inner if/elif mirrors
-# .zprofile's two standard install locations (user-home vs multi-user).
+# brew PATH on PATH. The outer guard on HOMEBREW_PREFIX makes it idempotent:
+# subshells inherit the var and skip the re-eval. Prefix search order:
+# ~/brew (this workstation: admin forbids new top-level dirs under /home, so no
+# /home/linuxbrew — jenkins wiped it once, breaking SSSD login) >
+# ~/.linuxbrew > /home/linuxbrew/.linuxbrew (legacy/multi-user default).
 if [[ -z "$HOMEBREW_PREFIX" ]]; then
-  if [[ -d ~/.linuxbrew ]]; then
+  if [[ -d ~/brew ]]; then
+    eval "$(~/brew/bin/brew shellenv)"
+  elif [[ -d ~/.linuxbrew ]]; then
     eval "$(~/.linuxbrew/bin/brew shellenv)"
   elif [[ -d /home/linuxbrew/.linuxbrew ]]; then
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
   fi
 fi
+
+# ~/brew is a non-default prefix (22 chars, shorter than the 25-char Linux
+# bottled prefix): pinned bottles (openssl@3/gettext/glib/python@3.x hubs)
+# relocate into an equal-or-shorter prefix only with this undocumented opt-in
+# (Library/Homebrew/plans/relocatable-bottles.md); without it they build from
+# source. Harmless at the default prefix, so keyed only on the dir existing.
+[[ -d ~/brew ]] && export HOMEBREW_RELOCATE_BUILD_PREFIX=1
 
 # PATH precedence (idempotent via zsh `path` array + `typeset -aU` which keeps
 # first occurrence and dedupes). Order: ~/bin > ~/.local/bin > linuxbrew >
@@ -26,9 +37,15 @@ fi
 # parameter expansions by default, so combining two paths in one ${...:+...}
 # yields a single array element containing a space (corrupting PATH). This
 # mirrors the fpath block below.
+# node@22's opt bin precedes $HOMEBREW_PREFIX/bin: node@22 is keg-only (never
+# linked into bin/) and must win PATH even if brew later auto-installs the
+# `node` formula as a dependency — node 26 bottles are unusable at the ~/brew
+# short prefix (relocation corrupts libnode's embedded snapshot/config; see
+# Brewfile node@22 comment).
 path=(
   $HOME/bin
   $HOME/.local/bin
+  ${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/opt/node@22/bin}
   ${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/bin}
   ${HOMEBREW_PREFIX:+$HOMEBREW_PREFIX/sbin}
   /usr/local/bin

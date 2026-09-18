@@ -11,8 +11,8 @@
 #   ./uninstall.sh --data    # also remove runtime data (nvim, atuin, opencode)
 #
 # Does NOT remove:
-#   - Homebrew (/home/linuxbrew/.linuxbrew) — multi-user impact; run the
-#     official uninstaller manually if needed:
+#   - Homebrew (~/brew, ~/.linuxbrew or /home/linuxbrew/.linuxbrew) — a prefix
+#     may be shared with other users; run the official uninstaller manually:
 #       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
 #   - /etc/shells entries — left in place (other users may need them)
 #   - the dotfiles repo ($DOTFILES) — printed as a hint at the end
