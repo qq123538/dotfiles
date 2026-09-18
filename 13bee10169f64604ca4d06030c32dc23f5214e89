@@ -1,0 +1,23 @@
+Brewfile
+  s_a49240acd6e8ab::t_af6ea6848bdb45 41
+install.sh
+  s_a49240acd6e8ab::t_af6ea6848bdb45 168-170,178-282,287-288,294,296,300-317,319-323,355-362,366
+uninstall.sh
+  s_a49240acd6e8ab::t_af6ea6848bdb45 162-192,196-202,208-228,230-240
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.17",
+  "base_commit_sha": "13bee10169f64604ca4d06030c32dc23f5214e89",
+  "prompts": {},
+  "sessions": {
+    "s_a49240acd6e8ab": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ff0f6e178ffe9ww152OwImPkP2",
+        "model": "GLM-5.2-Tencent"
+      },
+      "human_author": "Wl <55847117+qq123538@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+config/git/config
+  s_f8ae1b40807e1f::t_2b010b689ed51a 8-13
+config/git/identity-personal
+  s_f8ae1b40807e1f::t_4a113ceb188c1d 1-20
+AGENTS.md
+  s_f8ae1b40807e1f::t_29f12e858400c2 202-203,207-216
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.17",
+  "base_commit_sha": "a6b876f6b7205dce4f99e6dcc79f279cd4ef3013",
+  "prompts": {},
+  "sessions": {
+    "s_f8ae1b40807e1f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ffce76aa0ffeWipoouiQpTP5Jv",
+        "model": "GLM-5.2-Tencent"
+      },
+      "human_author": "Wl <55847117+qq123538@users.noreply.github.com>"
+    }
+  }
+}

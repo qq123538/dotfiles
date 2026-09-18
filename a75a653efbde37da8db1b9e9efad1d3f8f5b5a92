@@ -1,0 +1,33 @@
+.gitignore
+  s_f8ae1b40807e1f::t_51a261ca8ed5ea 35-37
+  s_f8ae1b40807e1f::t_bae8dfaebd7e8a 42
+AGENTS.md
+  s_f49b51dd7578fa::t_229834d35a4575 91-98
+  s_f8ae1b40807e1f::t_dd1580464e324b 102-109,120-131,141-145
+README.md
+  s_f8ae1b40807e1f::t_6cc6b55a2b2d94 442,452,457-461,469
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.17",
+  "base_commit_sha": "a75a653efbde37da8db1b9e9efad1d3f8f5b5a92",
+  "prompts": {},
+  "sessions": {
+    "s_f49b51dd7578fa": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_059651c98ffevJjtbrSN8ieWs0",
+        "model": "GLM-5.2-Tencent"
+      },
+      "human_author": "Wl <55847117+qq123538@users.noreply.github.com>"
+    },
+    "s_f8ae1b40807e1f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ffce76aa0ffeWipoouiQpTP5Jv",
+        "model": "GLM-5.2-Tencent"
+      },
+      "human_author": "Wl <55847117+qq123538@users.noreply.github.com>"
+    }
+  }
+}
