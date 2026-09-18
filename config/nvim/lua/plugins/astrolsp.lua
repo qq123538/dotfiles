@@ -52,11 +52,15 @@ return {
                     -- paths (e.g. arm-none-eabi-gcc under vcpkg) are merged in from
                     -- an optional local override at config/nvim/lua/local.lua
                     -- (gitignored). See local.lua.example for a template.
+                    local brew_prefix = vim.env.HOMEBREW_PREFIX or (vim.env.HOME .. "/brew")
                     local drivers = {
-                        (vim.env.HOMEBREW_PREFIX or "/home/linuxbrew/.linuxbrew") .. "/bin/gcc-13",
                         "/usr/bin/gcc",
                         "/usr/bin/gcc-11",
                     }
+                    -- brewed gcc ships only versioned binaries (gcc-16, no
+                    -- unversioned gcc); glob tracks version bumps instead of
+                    -- hardcoding (gcc-[0-9]* excludes gcc-ar/gcc-nm/gcc-ranlib).
+                    vim.list_extend(drivers, vim.fn.glob(brew_prefix .. "/bin/gcc-[0-9]*", true, true))
                     local ok, local_cfg = pcall(require, "local")
                     if ok and local_cfg then
                         vim.list_extend(drivers, local_cfg.clangd_query_drivers or {})
@@ -213,7 +217,24 @@ return {
                     end,
                 },
 
-                ["gD"] = { "<cmd>Lspsaga peek_definition<cr>" },
+                -- Lspsaga replacements: gD peek-style definitions via snacks picker
+                -- preview; gr/<Leader>lR references via snacks picker (native
+                -- vim.lsp.buf.references dumps multi-result lists into qflist).
+                ["gD"] = {
+                    function() require("snacks").picker.lsp_definitions() end,
+                    desc = "Peek definition",
+                    cond = "textDocument/definition",
+                },
+                ["gr"] = {
+                    function() require("snacks").picker.lsp_references() end,
+                    desc = "Search references",
+                    cond = "textDocument/references",
+                },
+                ["<Leader>lR"] = {
+                    function() require("snacks").picker.lsp_references() end,
+                    desc = "Search references",
+                    cond = "textDocument/references",
+                },
                 ["<Leader>lG"] = {
                     -- Enable all filter for c language, also can configure it by c = { "Class", Other symbol kind(refer to:https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolKind) }
                     function() require("snacks").picker.lsp_workspace_symbols { filter = { lua = true, c = true } } end,

@@ -207,23 +207,6 @@ return {
     },
 
     {
-        "nvimdev/lspsaga.nvim",
-        -- enabled = false,
-        opts = {
-            code_action = {
-                show_server_name = true,
-            },
-            -- Disable the CursorHold lightbulb: it auto-fires textDocument/codeAction,
-            -- which on huge AUTOSAR TUs (BswM_Integration.c etc.) where the preamble
-            -- fails to build triggers a clangd 22.1.6 SelectionTree SIGSEGV.
-            -- Manual code action (<leader>la) still works.
-            lightbulb = {
-                enable = false,
-            },
-        },
-    },
-
-    {
         "akinsho/toggleterm.nvim",
         lazy = false,
         opts = function(plugin, opts)
