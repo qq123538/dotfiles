@@ -1,0 +1,22 @@
+zsh/p10k.zsh.symlink
+  s_7e2315c9d1c6e8::t_c2e7221c1311f9 46-52
+config/tmux/tmux.conf
+  s_7e2315c9d1c6e8::t_f65b85eb20de9d 154-156,161-162,167
+  s_7e2315c9d1c6e8::t_214bb7cdf3a0ea 163-166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "d7ed724328f6046789a7607f4a8bdd6d174a50ad",
+  "prompts": {},
+  "sessions": {
+    "s_7e2315c9d1c6e8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fa40ed81affeyLecyhvc74EqFm",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    }
+  }
+}
