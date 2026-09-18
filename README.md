@@ -1,161 +1,163 @@
 # Dotfiles
-This project is forked from [nicknisi](https://github.com/nicknisi/dotfiles). I add my custom configuration.
-## Initial setup
-First, clone it from github to local machine.
-```bash
-git clone https://github.com/qq123538/dotfiles.git
-```
-Optionally, on a minimal/fresh Ubuntu image, install prerequisites:
-```bash
-sudo apt update && sudo apt install -y git curl
-```
-Secondly, install all.
-```bash
-./install.sh all
-```
-Finally, run tmux, and install tmux plugins with `M-s I` (prefix + Shift+I).
+
+Personal configuration for a Linux workstation (Ubuntu 22.04, native
+bare-metal or WSL2): zsh + oh-my-zsh, Neovim (AstroNvim), tmux,
+Alacritty/WezTerm, fzf/Atuin/Yazi, and the OpenCode AI coding agent.
+
+Forked from [nicknisi/dotfiles](https://github.com/nicknisi/dotfiles), with
+my own customizations layered on top.
 
 > **Note**
-> Homebrew installs to `/home/linuxbrew/.linuxbrew`; on a fresh machine this
-> requires `sudo` (the installer prompts for the password interactively). A
-> user without `sudo` can still run `./install.sh all` if Homebrew was
-> already installed by another user — `setup_homebrew` then skips
-> `brew bundle` and reuses the existing binaries read-only.
+> Coming from nicknisi's [vim + tmux talk](https://www.youtube.com/watch?v=5r6yzFEXajQ)? These dotfiles have changed tremendously since. Browse [the repo at recording time](https://github.com/nicknisi/dotfiles/tree/aa72bed5c4ecec540a31192581294818b69b93e2) for the version shown in the video.
 
-## Uninstall
+## Environment model
 
-`uninstall.sh` reverses `install.sh` — removes the symlinks, repo-managed
-artifacts (oh-my-zsh, TPM plugins), machine-local files (`~/.gitconfig-local`,
-`~/.fzf.zsh`, `~/.codegraph/`), and restores the login shell. Shell restore is
-tiered to match `install.sh`: **local users** get `chsh -s /bin/bash`; **AD/SSSD
-users** get `sss_override user-del` (removes the override, restoring the
-AD-defined shell — which may or may not be `/bin/bash`, that's an AD-admin
-concern). The `~/.bashrc` zsh exec fallback block is always removed if present.
+Two host questions shape how the installer behaves — probe them on a new
+machine instead of assuming.
+
+**WSL2 or native Linux?** On Windows hosts, Alacritty and WezTerm run on the
+Windows side and launch WSL via `wsl.exe`. On native Linux they run on the
+same host as the shell and inherit the login shell set by `install.sh shell`.
+
+**Local or directory-service user?** Corporate machines use AD/SSSD accounts
+that are not in `/etc/passwd`. This decides how the login shell is switched —
+see [Switching the shell](#switching-the-shell-tiered).
 
 ```bash
-./uninstall.sh           # config + machine-local + shell
-./uninstall.sh --data    # also remove nvim/atuin/opencode runtime data (prompts)
+getent -s files passwd "$USER"   # returns a row → local /etc/passwd user
+[ -e /run/WSL ]                  # true → running under WSL
+command -v brew sss_override chsh
 ```
 
-Homebrew itself is **not** uninstalled (multi-user safety); the script prints
-the manual command if needed. The dotfiles repo is also left in place.
+## How install works
 
-# (original README)Dotfiles
-
-Welcome to my world! Here you'll find a collection of configuration files for various tools and programs that I use on a daily basis. These dotfiles have been carefully curated and customized to streamline **my** workflow and improve **my** productivity. Your results may vary, but feel free to give it a try! Whether you're a fellow developer looking to optimize your setup or just curious about how I organize my digital life, I hope you find something useful in these dotfiles. So take a look around and feel free to borrow, modify, or fork to your heart's content. Happy coding!
-
-> **Note**
-> Did you arrive here through my YouTube talk, [vim + tmux](https://www.youtube.com/watch?v=5r6yzFEXajQ)? My dotfiles have changed tremendously since then, but feel free to peruse the state of this repo [at the time the video was recorded](https://github.com/nicknisi/dotfiles/tree/aa72bed5c4ecec540a31192581294818b69b93e2).
-
-![capture-20221204193335](https://user-images.githubusercontent.com/293805/205530265-1d0b1a7f-ae2f-4c22-942c-2a1efa0f83a6.png)
-
-## Initial setup
-
-The first thing you need to do is to clone this repo into a location of your choosing. For example, if you have a `~/Developer` directory where you clone all of your git repos, that's a good choice for this one, too. This repo is setup to not rely on the location of the dotfiles, so you can place it anywhere.
-
-> **Note**
-> If you're on macOS, you'll also need to install the XCode CLI tools before continuing.
+`install.sh` is the one-stop entry point for setup, backup, and installation:
 
 ```bash
-xcode-select --install
-```
-
-```bash
-git clone https://github.com/qq123538/dotfiles.git
-```
-
-> **Note**
-> This dotfiles configuration is set up in such a way that it _shouldn't_ matter where the repo exists on your system.
-
-The script, `install.sh` is the one-stop for all things setup, backup, and installation.
-
-```bash
-> ./install.sh
-
 Usage: install.sh {backup|link|git|homebrew|ohmyzsh|shell|codegraph|all}
 ```
 
-### `backup`
+### Symlink model
 
-```bash
-./install.sh backup
-```
+`link` symlinks config into `$HOME`, so the repo stays the single source of
+truth — editing a tracked file edits the live config.
 
-Create a backup of the current dotfiles (if any) into `~/dotfiles-backup/`. This will scan for the existence of every file that is to be symlinked and will move them over to the backup directory. It will also do the same for vim setups, moving some files in the [XDG base directory](http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html), (`~/.config`).
+- `**/*.symlink` → `~/.<basename>` with the suffix stripped
+  (`zsh/zshrc.symlink` → `~/.zshrc`)
+- each top-level entry in `config/` → `~/.config/<entry>`
+  (`config/nvim` → `~/.config/nvim`)
 
-- `~/.config/nvim/` - The home of [neovim](https://neovim.io/) configuration
-- `~/.vim/` - The home of vim configuration
-- `~/.vimrc` - The main init file for vim
+The repo is location-independent — clone it anywhere. To add a new tool, drop
+its config under `config/<tool>/` and re-run `./install.sh link`.
 
-### `link`
+### Subcommands
 
-```bash
-./install.sh link
-```
+| Command | What it does |
+| ------- | ------------ |
+| `backup` | Move existing dotfiles aside into `~/dotfiles-backup/` |
+| `link` | Create the symlinks described above |
+| `homebrew` | Install/verify Homebrew, then `brew bundle` against the [Brewfile](./Brewfile) |
+| `git` | Write machine-local `~/.gitconfig-local` (identity + credential helper) |
+| `ohmyzsh` | Install oh-my-zsh, powerlevel10k, and zsh-autosuggestions |
+| `shell` | Switch the login shell to zsh — tiered, see below |
+| `codegraph` | Install the CodeGraph CLI via its official installer |
+| `all` | `link` + `homebrew` + `git` + `ohmyzsh` + `shell` + `codegraph` |
 
-The `link` command will create [symbolic links](https://en.wikipedia.org/wiki/Symbolic_link) from the dotfiles directory into the `$HOME` directory, allowing for all of the configuration to _act_ as if it were there without being there, making it easier to maintain the dotfiles in isolation.
+`all` does **not** run `backup` — run that manually if you have existing
+dotfiles to preserve.
 
-### `homebrew`
+### Homebrew on Linux
 
-```bash
-./install.sh homebrew
-```
+`setup_homebrew` has three states:
 
-The `homebrew` command sets up [homebrew](https://brew.sh/) by downloading and running the homebrew installers script. Homebrew is a macOS package manager, but it also work on linux via Linuxbrew. If the script detects that you're installing the dotfiles on linux, it will use that instead. For consistency between operating systems, linuxbrew is set up but you may want to consider an alternate package manager for your particular system.
+1. brew absent → installs via the official script (needs `sudo` to create
+   `/home/linuxbrew/.linuxbrew`)
+2. brew present + prefix writable by `$USER` → runs `brew bundle` (owner)
+3. brew present + prefix read-only → skips `brew bundle`, warns, and reuses
+   the existing binaries via `PATH`
 
-Once homebrew is installed, it executes the `brew bundle` command which will install the packages listed in the [Brewfile](./Brewfile).
+State 3 is Homebrew's supported multi-user model — one owner installs, others
+consume. A user without `sudo` can still run `./install.sh all` when Homebrew
+was already installed by someone else.
 
-### `shell`
+Prefix detection order is `~/brew` > `~/.linuxbrew` > `/home/linuxbrew/.linuxbrew`
+(each shellenv prepends PATH, so `~/brew` is eval'd last and wins).
 
-```bash
-./install.sh shell
-```
+> **Note**
+> If admin policy forbids a new top-level dir under `/home`, skip the official installer and `git clone https://github.com/Homebrew/brew ~/brew` instead. That prefix (22 chars) is shorter than the bottled one (25), so `HOMEBREW_RELOCATE_BUILD_PREFIX=1` still lets pinned bottles relocate there instead of building from source.
 
-The `shell` command sets the login shell to [zsh](https://www.zsh.org/). The
-path is tiered so it works on corporate machines where the user is a
-directory-service account (AD/SSSD/LDAP, not in `/etc/passwd`):
+### Switching the shell (tiered)
 
-1. **Local user** (`/etc/passwd` entry) → `chsh -s <zsh>` (standard path).
+`shell` probes the user type first and picks one of three paths:
+
+1. **Local user** (in `/etc/passwd`) → `chsh -s <brew zsh>`, the standard
+   path.
 2. **AD/SSSD user** with `sss_override` + passwordless sudo →
-   `sss_override user-add` (creates a per-user SSSD cache override; does not
-   touch AD). First-time creation for the user restarts `sssd`; subsequent
-   updates use `sss_cache -u <user>` (less disruptive).
-3. **AD/SSSD user without sudo** (or `sss_override` absent) → falls back to a
-   sentinel-guarded `~/.bashrc` block that `exec`s zsh on interactive login.
-   **Non-interactive sessions (cron, `ssh -c`, `su -`) stay bash** in this
-   case — `$SHELL` is not changed. For a real shell change, ask your AD admin
-   to set `loginShell`.
+   `sss_override user-add`, a per-user SSSD override that does not touch AD.
+   First-time creation restarts `sssd`; subsequent updates use `sss_cache -u`
+   (less disruptive).
+3. **AD/SSSD user without sudo** (or no `sss_override`) → sentinel-guarded
+   `~/.bashrc` block that `exec`s zsh on interactive login.
 
-`/etc/shells` is probed first (required by both `chsh` and SSSD shell
-validation); if the brew zsh path isn't listed and sudo is unavailable, the
-script prints the manual command to run.
+In case 3, non-interactive sessions (cron, `ssh -c`, `su -`) stay bash —
+`$SHELL` is not changed. For a real change, ask your AD admin to set
+`loginShell`.
 
-### `all`
+`/etc/shells` is probed first (required by both `chsh` and SSSD validation).
+If the brew zsh path isn't listed and sudo is unavailable, the script prints
+the manual command to run.
+
+### backup
+
+`backup` moves every existing file that `link` would skip into
+`~/dotfiles-backup/`, plus legacy vim state (`~/.vim`, `~/.vimrc`,
+`~/.config/nvim`) when it is not itself a symlink.
+
+## Quickstart
+
+On a minimal/fresh Ubuntu image, install prerequisites first:
 
 ```bash
+sudo apt update && sudo apt install -y git curl
+```
+
+Then:
+
+```bash
+git clone https://github.com/qq123538/dotfiles.git
+cd dotfiles
 ./install.sh all
 ```
 
-This command runs `link`, `homebrew`, `git`, `ohmyzsh`, `shell`, and `codegraph`. It does **not** run `backup` — you must run that one manually.
+When the install finishes, open tmux and install its plugins with `M-s I`
+(prefix `M-s`, then Shift+I).
 
-## ZSH Configuration
+## ZSH configuration
 
-The ZSH setup uses [oh-my-zsh](https://ohmyz.sh/) with the [Powerlevel10k](https://github.com/romkatv/powerlevel10k) theme. Configuration is split across four files, each symlinked into `$HOME`:
+The ZSH setup uses [oh-my-zsh](https://ohmyz.sh/) with the
+[Powerlevel10k](https://github.com/romkatv/powerlevel10k) theme.
+Configuration is split across four files, each symlinked into `$HOME`:
 
-- `zsh/zshenv.symlink` → `~/.zshenv` — sourced on every shell invocation. Sets `$DOTFILES` (repo root, via readlink resolution), `$CACHEDIR`, `$PATH`, `EDITOR`, and puts `zsh/functions/` on `fpath`.
-- `zsh/zprofile.symlink` → `~/.zprofile` — sourced on login shells. Evaluates Homebrew shellenv (macOS arm/intel and Linuxbrew paths).
-- `zsh/zshrc.symlink` → `~/.zshrc` — the main interactive config. Loads oh-my-zsh, p10k, then recursively sources every `$DOTFILES/**/*.zsh` file.
-- `zsh/p10k.zsh.symlink` → `~/.p10k.zsh` — Powerlevel10k prompt configuration (lean style, generated by `p10k configure`).
+- `zsh/zshenv.symlink` → `~/.zshenv` — sourced on every shell invocation.
+  Sets `$DOTFILES` (repo root, via readlink resolution), `$CACHEDIR`,
+  `$PATH`, `EDITOR`, and puts `zsh/functions/` on `fpath`.
+- `zsh/zprofile.symlink` → `~/.zprofile` — sourced on login shells.
+  Evaluates Homebrew shellenv (macOS arm/intel and Linuxbrew paths).
+- `zsh/zshrc.symlink` → `~/.zshrc` — the main interactive config. Loads
+  oh-my-zsh and p10k, then recursively sources every `$DOTFILES/**/*.zsh`.
+- `zsh/p10k.zsh.symlink` → `~/.p10k.zsh` — Powerlevel10k prompt configuration
+  (lean style, generated by `p10k configure`).
+
+A new `*.zsh` file anywhere under `$DOTFILES` auto-loads on the next shell.
 
 ### ZSH plugins
 
-oh-my-zsh plugins are declared in `zshrc.symlink`:
+Declared in `zshrc.symlink`:
 
 - `git` — git aliases and completions
-- `fzf` — fzf key bindings (`Ctrl-T` files, `Alt-C` directories, `Ctrl-R` history via Atuin)
-- `zsh-autosuggestions` — fish-style inline suggestions (installed by `install.sh ohmyzsh`)
-
-Additional plugins can be added to `~/.zshrc.local` or `~/.localrc` to keep them out of git.
+- `fzf` — fzf key bindings (`Ctrl-T` files, `Alt-C` directories)
+- `zsh-autosuggestions` — fish-style inline suggestions (installed by
+  `install.sh ohmyzsh`)
 
 ### Machine-local overrides
 
@@ -164,18 +166,23 @@ These files are sourced if present but never committed:
 - `~/.zshenv.local` — environment overrides (sourced by `zshenv.symlink`)
 - `~/.zshrc.local` — interactive shell overrides (sourced by `zshrc.symlink`)
 - `~/.localrc` — machine-specific config (sourced by `zshrc.symlink`)
-- `~/.gitconfig-local` — git user name/email and per-OS credential helper (written by `install.sh git`)
+- `~/.gitconfig-local` — git identity and per-OS credential helper (written
+  by `install.sh git`)
 
 ### Autoloadable functions
 
-`zsh/functions/` is on `fpath`, providing these autoloadable functions:
+`zsh/functions/` is on `fpath`, providing:
 
-- `occm` — generate a conventional commit message via `opencode run --command commit` (pass `-m <provider/model>` to select a model; extra args become instructions)
+- `oc` — launch the OpenCode TUI
+- `occm` — generate a conventional commit message via
+  `opencode run --command commit` (pass `-m <provider/model>` to select a
+  model; extra args become instructions)
+- `ocpr` — run the `/pr` command headlessly via `opencode run --command pr`
 
 ## Git & SSH: multi-account setup
 
-Per-machine, manual setup. Structure lives in repo; identity (keys, emails,
-host names) stays in `$HOME` and is never committed.
+Per-machine, manual setup. The structure lives in the repo; identity (keys,
+emails, host names) stays in `$HOME` and is never committed.
 
 ### Setup steps
 
@@ -208,7 +215,8 @@ host names) stays in `$HOME` and is never committed.
      IdentitiesOnly yes
    ```
 
-4. **Set default identity** via `./install.sh git` (writes `~/.gitconfig-local`).
+4. **Set default identity** via `./install.sh git` (writes
+   `~/.gitconfig-local`).
 
 5. **Per repo, after clone** (stored in `.git/config`, never committed):
    ```bash
@@ -218,11 +226,13 @@ host names) stays in `$HOME` and is never committed.
 
 ### repo (multi-repo manifest) workflow
 
-For `repo init -u ...` workflows (Android, AOSP, embedded manifests) where
+For `repo init -u ...` workflows (Android, AOSP, embedded manifests),
 `repo sync` checks out dozens of projects — setting `user.email` per project
-is impractical. Use `repo init --config-name` instead: it prompts for
-`user.name` / `user.email` once and writes them to `.repo/config`, inherited
-by every project under that manifest.
+is impractical.
+
+Use `repo init --config-name` instead: it prompts for `user.name` /
+`user.email` once and writes them to `.repo/config`, inherited by every
+project under that manifest.
 
 1. **Init manifest with identity** (run once per manifest checkout):
    ```bash
@@ -253,6 +263,16 @@ SSH routing is unaffected: each project's remote URL (`git@<host>:...`) is
 matched against `~/.ssh/config` independently, so mixed GitHub + work-host
 manifests route the right key per project automatically.
 
+### This repo's own identity
+
+The XDG global gitconfig (`config/git/config`) pins this repo to a personal
+identity via an `includeIf hasconfig:remote.*.url:*qq123538/dotfiles*` block —
+it matches by remote URL, so it survives any clone path.
+
+Prerequisite: classic `~/.gitconfig` must not set `[user]` (it outranks XDG
+and would override the include). With it absent, work identity comes from
+`~/.gitconfig-local`, and this repo overrides to personal.
+
 ### Verify
 
 ```bash
@@ -265,41 +285,49 @@ cd <manifest-root>/<project> && git config user.email            # inherited
 
 ## Neovim setup
 
-> **Note**
-> This is no longer a vim setup. The configuration has been moved to be Neovim-specific and (mostly) written in [Lua](https://www.lua.org/).
-
-The simplest way to install Neovim is to install it from homebrew.
+Neovim installs from Homebrew — already covered if you ran
+`./install.sh homebrew`:
 
 ```bash
 brew install neovim
 ```
 
-However, it was likely installed already if you ran the `./install.sh homebrew` command provided in the dotfiles.
-
-All of the configuration for Neovim starts at `config/nvim/init.lua`, which is symlinked into the `~/.config/nvim` directory.
+All configuration starts at `config/nvim/init.lua`, symlinked into
+`~/.config/nvim`. It bootstraps lazy.nvim, which imports the AstroNvim
+community packs plus the user plugin specs in `lua/plugins/`.
 
 > **Warning**
-> The first time you run `nvim` with this configuration, it will likely have a lot of errors. This is because it is dependent on a number of plugins being installed.
+> The first `nvim` launch will show errors until the plugins finish installing — this is expected.
 
 ### Installing plugins
 
-On the first run, all required plugins should automaticaly by installed by
-[lazy.nvim](https://github.com/folke/lazy.nvim), a plugin manager for neovim.
+On first run, [lazy.nvim](https://github.com/folke/lazy.nvim) auto-installs
+every required plugin. Interface with it via `:Lazy` inside Neovim.
 
-All plugins are listed in the [lua/plugins/ directory](./config/nvim/lua/plugins/). When a plugin is added, it will automatically be installed by lazy.nvim. To interface with lazy.nvim, simply run `:Lazy` from within vim.
+Plugins are listed in [`config/nvim/lua/plugins/`](./config/nvim/lua/plugins/)
+— adding a spec there is enough for lazy.nvim to pick it up.
 
 > **Note**
-> Plugins can be synced headlessly with `nvim --headless "+Lazy! sync" +qa`, or interactively via `:Lazy` inside Neovim.
+> Plugins can be synced headlessly with `nvim --headless "+Lazy! sync" +qa`.
 
 ## Terminal emulator
 
-[Alacritty](https://alacritty.org/) is the primary terminal; [WezTerm](https://wezfurlong.org/wezterm/) is retained as a backup. On **Windows hosts**, both run on the Windows side and launch WSL via `wsl.exe`; on **native Linux hosts**, both run on the same host as the shell and inherit the login shell set by `install.sh shell` (the `wsl.exe` lines in the committed configs are simply not exercised).
+[Alacritty](https://alacritty.org/) is the primary terminal;
+[WezTerm](https://wezfurlong.org/wezterm/) is retained as a backup.
+
+On Windows hosts both run on the Windows side and launch WSL via `wsl.exe`.
+On native Linux both run on the same host as the shell and inherit the login
+shell — the `wsl.exe` lines in the committed configs are simply not exercised.
 
 ### Alacritty (primary)
 
-Config lives at `config/alacritty/alacritty.toml` (TOML). Campbell colors (inlined), JetBrainsMono Nerd Font at 14pt, 120×28 initial window, 2px padding, `Ctrl+Click` URL hints.
+Config lives at `config/alacritty/alacritty.toml` (TOML): Campbell colors
+(inlined), JetBrainsMono Nerd Font at 14pt, 120×28 initial window, 2px
+padding, `Ctrl+Click` URL hints.
 
-`install.sh link` symlinks `config/alacritty` to `~/.config/alacritty/` (the Linux build's native path). On **Windows hosts** the Windows build reads `%APPDATA%\alacritty\alacritty.toml` instead, so soft-link that to the repo file to keep a single source of truth:
+`install.sh link` symlinks it to `~/.config/alacritty/`. On Windows hosts the
+Windows build reads `%APPDATA%\alacritty\alacritty.toml` instead — soft-link
+that to the repo file for a single source of truth:
 
 ```powershell
 winget install Alacritty.Alacritty
@@ -310,27 +338,36 @@ New-Item -ItemType SymbolicLink `
 ```
 
 Notes:
-- On Windows hosts, default shell is `wsl.exe ~ -d Ubuntu-22.04` (no launch_menu — Alacritty has no GUI launcher). On native Linux, Alacritty inherits the login shell.
-- `TERM` is set to `alacritty` (the terminfo is available via Linuxbrew ncurses 6.6); tmux's `alacritty:Tc` override handles TrueColor.
-- OSC52 clipboard works natively — `"+y` in nvim reaches the Windows clipboard through tmux `set-clipboard external`, with zero config.
-- No tab support by design — use tmux.
+
+- Windows hosts: default shell is `wsl.exe ~ -d Ubuntu-22.04` (no launch_menu
+  — Alacritty has no GUI launcher). Native Linux: inherits the login shell.
+- `TERM` is set to `alacritty` (terminfo via Linuxbrew ncurses 6.6); tmux's
+  `alacritty:Tc` override handles TrueColor.
+- OSC52 clipboard works natively — `"+y` in nvim reaches the Windows
+  clipboard through tmux `set-clipboard external`, with zero config.
+- No tab support by design — use tmux. `Ctrl+Click` opens URLs in the Windows
+  default browser via `cmd.exe /c start`.
 
 ### WezTerm (backup)
 
-Config at `config/wezterm/wezterm.lua`. Kept as a fallback terminal; on Windows hosts the default program is PowerShell with a WSL entry in the launch menu. On native Linux it inherits the login shell.
+Config at `config/wezterm/wezterm.lua`. On Windows hosts the default program
+is PowerShell with a WSL entry in the launch menu; on native Linux it
+inherits the login shell.
 
 ## tmux configuration
 
-I prefer to run everything inside of [tmux](https://github.com/tmux/tmux). I typically use a large pane on the top for neovim and then multiple panes along the bottom or right side for various commands I may need to run. There are no pre-configured layouts in this repository, as I tend to create them on-the-fly and as needed.
+Everything runs inside [tmux](https://github.com/tmux/tmux): typically a
+large top pane for Neovim and bottom or side panes for commands. No
+pre-configured layouts — they are created on-the-fly as needed.
 
-This configuration provides a bit of style to the tmux bar, along with some additional data such as the system name, the session name, and the current time.
-
-> **Note**
-> It also changes the prefix from `⌃-b` to `M-s` (Alt+s).
+The status bar is styled and shows the system name, session name, and
+current time. The prefix is `M-s` (Alt+s), not the default `⌃-b`.
 
 ### tmux key commands
 
-Pane navigation and resizing use `M-h/j/k/l` and `M-H/J/K/L` (Alt + key, **no prefix**), wired via [tmux.nvim](https://github.com/aserowy/tmux.nvim) for seamless neovim↔tmux pane switching.
+Pane navigation and resizing use `M-h/j/k/l` and `M-H/J/K/L` (Alt + key,
+**no prefix**), wired via [tmux.nvim](https://github.com/aserowy/tmux.nvim)
+for seamless neovim↔tmux pane switching.
 
 Prefix (`M-s`) + key:
 
@@ -358,13 +395,30 @@ Without prefix:
 | `M-h/j/k/l` | Navigate pane left/down/up/right |
 | `M-H/J/K/L` | Resize pane                    |
 
+### SSH auto-attach
+
+On SSH login, zsh auto-attaches the most-recently-used tmux session, with a
+new-session fallback when the server is dead. Guards: skips inside tmux,
+non-SSH shells, and non-TTY; opt out with `TMUX_NO_AUTO_ATTACH=1`.
+
+Closing a terminal tab kills the ssh client but not the server-side session —
+the next login lands straight back in it. `M-s d` detaches into the login
+shell without dropping the SSH connection.
+
 ## Atuin (shell history)
 
-[Atuin](https://github.com/atuinsh/atuin) replaces shell history with a searchable, syncable SQLite database. This setup runs **local-only** (no cloud account); search uses fzf-style fuzzy matching to match the existing fzf workflow.
+[Atuin](https://github.com/atuinsh/atuin) replaces shell history with a
+searchable, syncable SQLite database. This setup runs **local-only** (no
+cloud account); search uses fzf-style fuzzy matching to match the existing
+fzf workflow.
 
 ### Installation
 
-Atuin is listed in the [Brewfile](./Brewfile) and installed by `./install.sh homebrew`. The config is symlinked to `~/.config/atuin/config.toml` by `./install.sh link`, and the zsh integration (`zsh/atuin.zsh`) is auto-sourced by `zshrc.symlink`.
+Atuin is listed in the [Brewfile](./Brewfile) and installed by
+`./install.sh homebrew`. The config is symlinked to
+`~/.config/atuin/config.toml` by `./install.sh link`.
+
+The zsh integration (`zsh/atuin.zsh`) is auto-sourced by `zshrc.symlink`.
 
 ### Keybindings
 
@@ -410,11 +464,18 @@ See the [Atuin docs](https://docs.atuin.sh/) for full reference.
 
 ## Yazi (file manager)
 
-[Yazi](https://github.com/sxyazi/yazi) is a fast terminal file manager with async I/O and image preview. It complements `fzf` — use **fzf for known targets** (`Ctrl-T` / `Alt-C`) and **yazi for browsing** and image previews.
+[Yazi](https://github.com/sxyazi/yazi) is a fast terminal file manager with
+async I/O and image preview. It complements `fzf` — use **fzf for known
+targets** (`Ctrl-T` / `Alt-C`) and **yazi for browsing** and image previews.
 
 ### Installation
 
-Yazi and `chafa` (image-preview fallback for tmux, especially on WSL2 where no native GPU preview is available) are listed in the [Brewfile](./Brewfile) and installed by `./install.sh homebrew`. The config is symlinked to `~/.config/yazi/` by `./install.sh link`, and the shell integration (`zsh/yazi.zsh`) is auto-sourced by `zshrc.symlink`.
+Yazi and `chafa` (image-preview fallback for tmux, especially on WSL2 where
+no native GPU preview is available) are listed in the [Brewfile](./Brewfile)
+and installed by `./install.sh homebrew`.
+
+The config is symlinked to `~/.config/yazi/` by `./install.sh link`, and the
+shell integration (`zsh/yazi.zsh`) is auto-sourced by `zshrc.symlink`.
 
 ### Shell commands
 
@@ -442,29 +503,48 @@ Yazi and `chafa` (image-preview fallback for tmux, especially on WSL2 where no n
 
 Only values that diverge from yazi's shipped defaults are committed:
 
-- `config/yazi/yazi.toml` — `show_hidden = true`, `linemode = "size"`, `sort_by = "mtime"` (newest first).
-- `config/yazi/keymap.toml` — `prepend_keymap` adds `,g` → `lazygit`; all defaults preserved.
+- `config/yazi/yazi.toml` — `show_hidden = true`, `linemode = "size"`,
+  `sort_by = "mtime"` (newest first).
+- `config/yazi/keymap.toml` — `prepend_keymap` adds `,g` → `lazygit`; all
+  defaults preserved.
 
 No `theme.toml` is shipped (yazi's built-in dark theme matches the terminal).
 
 ### Practical usage
 
-1. **`yc`** — open yazi, browse with `hjkl`, `q` to exit back into the cwd you left. The single most useful thing: yazi as a "where did I put that file" tool that leaves you positioned correctly when you quit.
-2. **Image previews** — yazi's killer feature. On tmux (WSL2 or native Linux) + Alacritty (or wezterm), the `chafa` fallback renders images as ANSI block art. Scan a folder of screenshots without leaving the terminal.
-3. **Code previews** — press `K` / `J` to scroll the preview pane; yazi renders files with syntax highlighting and the directory tree on the right.
-4. **Open in nvim from yazi** — `Enter` / `o` opens the highlighted file in nvim (text files only; images open via `xdg-open`).
-5. **`,g` from inside yazi** — spawns lazygit in the current pane's dir, without leaving yazi.
-6. **Use alongside fzf** — `Ctrl-T` (fzf file) and `Alt-C` (fzf dir) stay as the "I know the name" path; yazi is the "I need to look around" path.
+1. **`yc`** — open yazi, browse with `hjkl`, `q` to exit back into the cwd
+   you left. The single most useful thing: yazi as a "where did I put that
+   file" tool that leaves you positioned correctly when you quit.
+2. **Image previews** — yazi's killer feature. On tmux (WSL2 or native
+   Linux) + Alacritty (or wezterm), the `chafa` fallback renders images as
+   ANSI block art. Scan a folder of screenshots without leaving the terminal.
+3. **Code previews** — press `K` / `J` to scroll the preview pane; yazi
+   renders files with syntax highlighting and the directory tree on the
+   right.
+4. **Open in nvim from yazi** — `Enter` / `o` opens the highlighted file in
+   nvim (text files only; images open via `xdg-open`).
+5. **`,g` from inside yazi** — spawns lazygit in the current pane's dir,
+   without leaving yazi.
+6. **Use alongside fzf** — `Ctrl-T` (fzf file) and `Alt-C` (fzf dir) stay as
+   the "I know the name" path; yazi is the "I need to look around" path.
 
 **Rule of thumb:** fzf for *known targets*, yazi for *browsing* and *images*.
 
 ## OpenCode (AI coding agent)
 
-[OpenCode](https://opencode.ai) is an open-source AI coding agent CLI/TUI. This repo manages its **personal/portable** global config so MCP servers, the `/commit` command, and global rules are version-controlled and portable. Work-specific providers and MCP live in a machine-local overlay (see [Work overlay](#work-overlay-machine-local-not-in-repo) below).
+[OpenCode](https://opencode.ai) is an open-source AI coding agent CLI/TUI.
+This repo manages its **personal/portable** global config so MCP servers,
+custom commands, and global rules are version-controlled and portable.
+
+Work-specific providers and MCP live in a machine-local overlay — see
+[Work overlay](#work-overlay-machine-local-not-in-repo) below.
 
 ### Installation
 
-OpenCode is installed via `./install.sh homebrew` (see [Brewfile](./Brewfile)). The config is symlinked to `~/.config/opencode/` by `./install.sh link` — the same `config/<tool>` convention as atuin/yazi/alacritty.
+OpenCode is installed via `./install.sh homebrew` (see
+[Brewfile](./Brewfile)). The config is symlinked to `~/.config/opencode/` by
+`./install.sh link` — the same `config/<tool>` convention as
+atuin/yazi/alacritty.
 
 ### Managed files
 
@@ -477,17 +557,44 @@ OpenCode is installed via `./install.sh homebrew` (see [Brewfile](./Brewfile)). 
 
 ### Work overlay (machine-local, not in repo)
 
-Work-specific config — company model providers and the `jira` MCP — is kept out of this personal repo. opencode deep-merges config sources in order: global (`~/.config/opencode/opencode.json`) → `OPENCODE_CONFIG` env-var file → project-level. The work overlay lives at `~/.config/opencode-work.json` (a real file in `~/.config/`, **not** inside the symlinked `~/.config/opencode/` dir, so it never touches the repo worktree). On work machines, `~/.zshrc.local` sets `export OPENCODE_CONFIG="$HOME/.config/opencode-work.json"`; personal machines leave it unset.
+Work-specific config — company model providers and the `jira` MCP — is kept
+out of this personal repo.
 
-**No secrets live in the repo or the overlay.** Provider credentials are stored in `~/.local/share/opencode/auth.json` (never committed) and loaded by the opencode CLI at startup. The overlay uses `{env:...}` references (e.g. `JIRA_PERSONAL_TOKEN`) for any secret-bearing values. Avante.nvim talks to opencode via ACP (Agent Client Protocol), so it reuses the same merged providers — no separate env-var wiring or duplicated provider config.
+opencode deep-merges config sources in order: global
+(`~/.config/opencode/opencode.json`) → `OPENCODE_CONFIG` env-var file →
+project-level.
+
+The work overlay lives at `~/.config/opencode-work.json` — a real file in
+`~/.config/`, **not** inside the symlinked `~/.config/opencode/` dir, so it
+never touches the repo worktree.
+
+On work machines, `~/.zshrc.local` sets
+`export OPENCODE_CONFIG="$HOME/.config/opencode-work.json"`; personal
+machines leave it unset, so only the personal base loads.
+
+**No secrets live in the repo or the overlay.** Provider credentials are
+stored in `~/.local/share/opencode/auth.json` (never committed) and loaded
+by the opencode CLI at startup.
+
+The overlay uses `{env:...}` references (e.g. `JIRA_PERSONAL_TOKEN`) for any
+secret-bearing values.
+
+Avante.nvim talks to opencode via ACP (Agent Client Protocol), so it reuses
+the same merged providers — no separate env-var wiring or duplicated
+provider config.
 
 ### Runtime files (gitignored)
 
-OpenCode regenerates several files inside the symlinked `~/.config/opencode/` dir at runtime; these are gitignored at repo root and must not be committed:
+OpenCode regenerates several files inside the symlinked
+`~/.config/opencode/` dir at runtime; these are gitignored at repo root and
+must not be committed:
 
-- `node_modules/`, `package.json`, `package-lock.json`, `bun.lock` — plugin install state (regenerated from `opencode.json`'s `plugin` array)
-- `antigravity-accounts.json*`, `antigravity-signature-cache.json`, `antigravity-logs/` — antigravity provider session state
-- `plugins/` — work-only plugins (e.g. `git-ai.ts`), machine-generated by `git-ai install-hooks` with a hardcoded binary path
+- `node_modules/`, `package.json`, `package-lock.json`, `bun.lock` — plugin
+  install state (regenerated from `opencode.json`'s `plugin` array)
+- `antigravity-accounts.json*`, `antigravity-signature-cache.json`,
+  `antigravity-logs/` — antigravity provider session state
+- `plugins/` — work-only plugins (e.g. `git-ai.ts`), machine-generated by
+  `git-ai install-hooks` with a hardcoded binary path
 
 ### Shell commands
 
@@ -499,33 +606,67 @@ OpenCode regenerates several files inside the symlinked `~/.config/opencode/` di
 
 ### Adding a custom command
 
-Drop a markdown file in `config/opencode/commands/<name>.md` with frontmatter (`description`, optional `agent`/`model`) and a prompt template. It becomes `/name` in the TUI and `opencode run --command name` on the CLI. See [the commands docs](https://opencode.ai/docs/commands) and the existing `commit.md` for a reference template.
+Drop a markdown file in `config/opencode/commands/<name>.md` with frontmatter
+(`description`, optional `agent`/`model`) and a prompt template.
 
-## Docker Setup
+It becomes `/name` in the TUI and `opencode run --command name` on the CLI.
+See [the commands docs](https://opencode.ai/docs/commands) and the existing
+`commit.md` for a reference template.
 
-A Dockerfile exists in the repository as a testing ground for linux support. To set up the image, make sure you have Docker installed and then run the following command.
+## Uninstall
+
+`uninstall.sh` reverses `install.sh` — removes the symlinks (each verified to
+point into the repo), repo-managed artifacts (oh-my-zsh, TPM plugins), and
+machine-local files (`~/.gitconfig-local`, `~/.fzf.zsh`, `~/.codegraph/`).
+
+Shell restore is tiered like the install: local users get
+`chsh -s /bin/bash`; AD/SSSD users get `sss_override user-del` (removes the
+override, restoring the AD-defined shell — which may or may not be
+`/bin/bash`).
+
+The `~/.bashrc` zsh exec fallback block is always removed if present.
 
 ```bash
-docker build -t dotfiles --force-rm --build-arg PRIVATE_KEY="$(cat ~/.ssh/id_rsa)" --build-arg PUBLIC_KEY="$(cat ~/.ssh/id_rsa.pub)" .
+./uninstall.sh           # config + machine-local + shell
+./uninstall.sh --data    # also remove nvim/atuin/opencode runtime data (prompts)
 ```
 
-This should create a `dotfiles` image which will set up the base environment with the dotfiles repo cloned. To run, execute the following command.
+Homebrew itself is **not** uninstalled (multi-user safety) — the script
+prints the manual command if needed. The dotfiles repo is also left in place.
+
+## Docker testing
+
+The `Dockerfile` builds an Ubuntu image as a testing ground for the Linux
+install path (SSH keys injected via build args):
+
+```bash
+docker build -t dotfiles --force-rm \
+  --build-arg PRIVATE_KEY="$(cat ~/.ssh/id_rsa)" \
+  --build-arg PUBLIC_KEY="$(cat ~/.ssh/id_rsa.pub)" .
+```
+
+Run it and manually test the installation process inside:
 
 ```bash
 docker run -it --rm dotfiles
 ```
 
-This will open a bash shell in the container which can then be used to manually test the dotfiles installation process with linux.
-
 ## Preferred software
 
-- [Alacritty](https://alacritty.org/) - GPU-accelerated terminal emulator (primary); cross-platform, TOML config, native OSC52 clipboard
-- [WezTerm](https://wezfurlong.org/wezterm/) - GPU-accelerated terminal emulator (backup); good tmux and WSL2 support
-- [tmux](https://github.com/tmux/tmux) - Terminal multiplexer
-- [Neovim](https://neovim.io/) - Hyper-extensible Vim-based text editor
-- [Yazi](https://github.com/sxyazi/yazi) - Terminal file manager with image preview
-- [OpenCode](https://opencode.ai) - Open-source AI coding agent CLI/TUI
+- [Alacritty](https://alacritty.org/) — GPU-accelerated terminal (primary);
+  cross-platform, TOML config, native OSC52 clipboard
+- [WezTerm](https://wezfurlong.org/wezterm/) — GPU-accelerated terminal
+  (backup); good tmux and WSL2 support
+- [tmux](https://github.com/tmux/tmux) — terminal multiplexer
+- [Neovim](https://neovim.io/) — hyper-extensible Vim-based text editor
+- [fzf](https://github.com/junegunn/fzf) — fuzzy finder for known targets
+- [Atuin](https://github.com/atuinsh/atuin) — searchable shell history
+- [Yazi](https://github.com/sxyazi/yazi) — terminal file manager with image
+  preview
+- [OpenCode](https://opencode.ai) — open-source AI coding agent CLI/TUI
 
 ## Questions
 
-If you have questions, notice issues, or would like to see improvements, please open a new [discussion](https://github.com/qq123538/dotfiles/discussions/new) and I'm happy to help you out!
+If you have questions, notice issues, or would like to see improvements,
+please open a new [discussion](https://github.com/qq123538/dotfiles/discussions/new)
+and I'm happy to help you out!
