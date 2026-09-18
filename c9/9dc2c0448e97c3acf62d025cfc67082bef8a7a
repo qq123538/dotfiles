@@ -1,0 +1,22 @@
+config/nvim/lua/plugins/markdown-preview.lua
+  s_96037af96b3c8e::t_81dcd93d2dfefd 32-38
+  s_96037af96b3c8e::t_5e557e2b16613a 1-9,14-25,27-28,39,46-50
+  s_96037af96b3c8e::t_559df1c1519f23 10-13
+  s_96037af96b3c8e::t_8ad77b6df1b759 26,29-31,40-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "c99dc2c0448e97c3acf62d025cfc67082bef8a7a",
+  "prompts": {},
+  "sessions": {
+    "s_96037af96b3c8e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fdcc4e941ffevxG89sIxva1rpx",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    }
+  }
+}
