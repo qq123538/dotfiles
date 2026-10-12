@@ -51,3 +51,22 @@ reaches for the right tool instead of defaulting to a grep/Read crawl.
   `jira_search` (e.g. `assignee = currentUser() AND statusCategory != Done`)
   rather than shell-probing. Before `jira_create_issue`, run a `jira_search`
   first (same project + summary keywords) to avoid creating a duplicate.
+
+## Document revision
+
+When revising, editing, or polishing a document (markdown or plain text),
+regardless of how the request is phrased:
+
+- Apply changes with the edit/write tools directly. Never paste the revised
+  text — whole file or large blocks — into the reply.
+- The document stays a clean final version: no revision meta-commentary
+  inside it ("修订说明", "已修改", "本节已调整", changelogs, "（已删除）"),
+  unless the user explicitly asked for that as part of the deliverable.
+- Change notes only when explicitly requested — as a separate chat message,
+  never inside the file.
+- Each revision round starts by re-reading the file. Tool results are the
+  only source of truth about document state; earlier assistant narrations
+  about the document are not.
+- Change only what the request covers; leave surrounding content untouched.
+- For a stricter, permission-enforced protocol use the `doc-editor` agent
+  or the `/revise` command.
