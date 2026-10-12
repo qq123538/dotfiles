@@ -1,0 +1,23 @@
+config/opencode/AGENTS.md
+  s_15d1514e22b64e::t_0a5c8535bd438f 54-70
+config/opencode/agents/doc-editor.md
+  s_15d1514e22b64e::t_250383cca5bd75 1-33
+config/opencode/commands/revise.md
+  s_15d1514e22b64e::t_8a805dc39804a7 1-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "bfb2ae91d52e9dfb3afb0b324a0354ac31551048",
+  "prompts": {},
+  "sessions": {
+    "s_15d1514e22b64e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ed2114a94ffeNsTolvVoXyH97j",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    }
+  }
+}
