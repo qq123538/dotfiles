@@ -1,0 +1,69 @@
+README.md
+  s_44b0bad71e9d8e::t_79cdd140457c40 556
+  s_44b0bad71e9d8e::t_d5377431da30b9 596-598
+  s_44b0bad71e9d8e::t_2fae7047a3c192 182-184
+config/opencode/opencode.json
+  s_9b8706d1d39698::t_907b012a9262bb 79-135
+  s_44b0bad71e9d8e::t_b2513251801b14 144-150,152-154
+  s_310632af0dbac6::t_77a9dde5aeb17c 10-17
+config/opencode/AGENTS.md
+  s_15d1514e22b64e::t_0a5c8535bd438f 42
+  s_46e448b7ccff27::t_41e3fb971dc6f0 43-44,52,54-55
+  s_310632af0dbac6::t_70b5fb0f52de66 63-66,68-69,74,76
+.gitignore
+  s_44b0bad71e9d8e::t_6f36c250a9da8b 35-37
+AGENTS.md
+  s_44b0bad71e9d8e::t_5eaba20e03bd14 247-254
+  s_44b0bad71e9d8e::t_7203de0499e321 268-269,275-276,279,282-290
+  s_44b0bad71e9d8e::t_63e441e9336372 259-262
+  s_44b0bad71e9d8e::t_599ba2242fc299 208-214
+  s_44b0bad71e9d8e::t_1c3f2726cd00db 296-300
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "be713236b152e3ca66ba14ba342a48a7c4718ecd",
+  "prompts": {},
+  "sessions": {
+    "s_15d1514e22b64e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ed2114a94ffeNsTolvVoXyH97j",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    },
+    "s_310632af0dbac6": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ea5e5f7c5ffeJ7o1qkPyhm5xVT",
+        "model": "DeepSeek-V4.1-Flash-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    },
+    "s_44b0bad71e9d8e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_e933767b2ffe7lQOJ7JB25uyx8",
+        "model": "DeepSeek-V4.1-Flash-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    },
+    "s_46e448b7ccff27": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ee503cf64ffeK6scrVuS7VuB8M",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    },
+    "s_9b8706d1d39698": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ea757228fffeGmvmuW9lcOUHiW",
+        "model": "DeepSeek-V4.1-Flash-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    }
+  }
+}
