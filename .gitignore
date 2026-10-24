@@ -32,6 +32,9 @@ config/opencode/antigravity-accounts.json.*.tmp
 config/opencode/antigravity-accounts.json.lock
 config/opencode/antigravity-signature-cache.json
 config/opencode/antigravity-logs/
+# V2 terminal-client config and background-service state (auto-generated)
+config/opencode/cli.json
+config/opencode/service.json
 # Work-specific plugins (e.g. git-ai.ts) — machine-generated with hardcoded
 # home paths, only present on work machines via `git-ai install-hooks`.
 config/opencode/plugins/
