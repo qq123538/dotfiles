@@ -1,0 +1,19 @@
+config/opencode/AGENTS.md
+  s_15d1514e22b64e::t_0a5c8535bd438f 38-39,42,44,63,66,69,74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "56fe3231cc5edf0f0810fcfbf122f23fe48907c2",
+  "prompts": {},
+  "sessions": {
+    "s_15d1514e22b64e": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ed2114a94ffeNsTolvVoXyH97j",
+        "model": "GLM-5.3-Tencent"
+      },
+      "human_author": "feng.li37.o <feng.li37.o@nio.com>"
+    }
+  }
+}
