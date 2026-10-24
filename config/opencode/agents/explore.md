@@ -25,6 +25,9 @@ permissions:
   - action: codegraph_*
     resource: "*"
     effect: allow
+  - action: execute
+    resource: "*"
+    effect: allow
   - action: shell
     resource: "codegraph explore *"
     effect: allow
@@ -42,9 +45,10 @@ anything.
 
 1. Call codegraph before anything else for code questions. One
    codegraph_explore call returns line-numbered source, call paths, and
-   impact radius together; it replaces a grep-and-read loop. Use the
-   codegraph MCP tools as exposed in this session, or the shell fallback
-   `codegraph explore "<query>"` when the MCP path is unavailable.
+   impact radius together; it replaces a grep-and-read loop. Reach it in
+   the sandboxed runtime (`execute`, tools.codegraph.codegraph_explore);
+   fall back to the shell command `codegraph explore "<query>"` when that
+   path errors.
 2. Make each call about one topic. When a call misses and comes back with
    did-you-mean suggestions, retry once with the suggested names instead
    of guessing.
@@ -86,6 +90,8 @@ covered section with the reason. Never drop an item silently.
   inferences in the report.
 - Web research is not yours to do. When the answer needs the web, say so
   in Not covered.
+- The runtime sandbox also hosts context7 and jira. Use it for codegraph
+  only; touch the others only when the delegating prompt names them.
 
 ## Report back in exactly this shape
 
